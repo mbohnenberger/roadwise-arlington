@@ -349,7 +349,7 @@ function gradeQuestion(element,correct,q){
   $('#footer-copy').textContent=correct?q.why:`Answer: ${answer}. ${q.why}`;
   $('#footer-action').textContent=session.index===session.round.length-1?'Finish':'Continue';
   $('#footer-action').onclick=nextQuestion;
-  requestAnimationFrame(()=>{reserveFooter();footer.scrollIntoView({block:'nearest'});$('#footer-action').focus();});
+  requestAnimationFrame(()=>{reserveFooter();$('#footer-action').focus({preventScroll:true});});
 }
 function nextQuestion(){
   if(session.index<session.round.length-1){session.index++;renderLesson();}else{session.stage='complete';completeLesson();renderLesson();}
