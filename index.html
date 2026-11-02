@@ -3,7 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#101a34">
+  <meta name="theme-color" content="#0d1730">
+  <meta name="description" content="Learn Arlington's major roads, connections, and destination gateways through short progressive lessons.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Roadwise">
   <title>Roadwise Arlington</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,48 +15,73 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<a class="skip-link" href="#main">Skip to game</a>
+<a class="skip-link" href="#course">Skip to course</a>
 <header class="topbar">
-  <a class="brand" href="#" aria-label="Roadwise home"><span class="brand-mark" aria-hidden="true">↗</span><span>ROADWISE</span></a>
-  <div class="stats" aria-label="Progress">
-    <span title="Current streak">🔥 <strong id="streak">0</strong></span>
-    <span title="Points">✦ <strong id="points">0</strong></span>
+  <a class="brand" href="#course" aria-label="Roadwise course home"><span class="brand-mark" aria-hidden="true">↗</span><span>ROADWISE</span></a>
+  <div class="stats" aria-label="Course statistics">
+    <span title="Daily streak">🔥 <strong id="streak">0</strong></span>
+    <span title="Experience points">✦ <strong id="xp">0</strong></span>
   </div>
 </header>
-<main id="main">
-  <section class="hero" id="home">
-    <div class="eyebrow">ARLINGTON · MA</div>
-    <h1>Know the roads.<br><em>Lose the GPS.</em></h1>
-    <p>Build a mental map of the corridors, turns, and connections that get you around town.</p>
-    <div class="notice"><span aria-hidden="true">◎</span><span><strong>Study tool, not live navigation.</strong> Prototype routes are simplified and must not be used for driving directions.</span></div>
-    <button class="primary" id="start-btn">Start a quick round <span aria-hidden="true">→</span></button>
-  </section>
 
-  <section class="dashboard" aria-labelledby="train-title">
-    <div class="section-heading"><div><span class="kicker">YOUR TRAINING</span><h2 id="train-title">Pick a mode</h2></div><button class="text-btn" id="reset-btn">Reset progress</button></div>
-    <div class="mode-grid">
-      <button class="mode-card coral" data-mode="trace"><span class="mode-icon" aria-hidden="true">〰</span><span><strong>Trace the road</strong><small>Recognize corridors by shape & direction</small></span><span class="arrow">↗</span></button>
-      <button class="mode-card blue" data-mode="connect"><span class="mode-icon" aria-hidden="true">◇</span><span><strong>What connects these?</strong><small>Build the major-road chain</small></span><span class="arrow">↗</span></button>
-      <button class="mode-card lime" data-mode="turn"><span class="mode-icon" aria-hidden="true">↱</span><span><strong>Next turn</strong><small>Choose at a key junction</small></span><span class="arrow">↗</span></button>
-      <button class="mode-card violet" data-mode="map"><span class="mode-icon" aria-hidden="true">⌘</span><span><strong>Mental map</strong><small>Study the whole network</small></span><span class="arrow">↗</span></button>
+<main id="course" class="course-shell">
+  <section class="course-hero" aria-labelledby="course-title">
+    <div>
+      <span class="eyebrow">ARLINGTON · MA</span>
+      <h1 id="course-title">Build your<br><em>mental map.</em></h1>
+      <p>Start with the town’s backbone. Add connectors, gateways, and the journeys you actually make.</p>
+    </div>
+    <div class="summary-card" aria-live="polite">
+      <div><strong id="roads-known">0</strong><span>roads known</span></div>
+      <i aria-hidden="true"></i>
+      <div><strong id="connections-known">0</strong><span>connections</span></div>
+      <div class="summary-progress"><span id="summary-copy">Your first road is ready</span><b><i id="course-progress"></i></b></div>
     </div>
   </section>
 
-  <section class="learn-strip" aria-label="Learning goals">
-    <span>YOU'LL LEARN</span><div><b>↔</b> Directions</div><div><b>⊕</b> Intersections</div><div><b>⇄</b> Name changes</div><div><b>◎</b> Destinations</div>
+  <section class="actions" aria-label="Study actions">
+    <button class="action-card review" id="review-btn">
+      <span class="action-icon" aria-hidden="true">↻</span><span><strong>Review weak spots</strong><small id="review-copy">No reviews due yet</small></span><span aria-hidden="true">›</span>
+    </button>
+    <button class="action-card explore" id="explore-btn">
+      <span class="action-icon" aria-hidden="true">⌘</span><span><strong>Explore your map</strong><small>Study roads you’ve unlocked</small></span><span aria-hidden="true">›</span>
+    </button>
   </section>
+
+  <section class="path-wrap" aria-labelledby="path-title">
+    <div class="path-heading"><div><span class="kicker">YOUR COURSE</span><h2 id="path-title">Arlington outward</h2></div><button class="text-btn" id="reset-btn">Reset</button></div>
+    <div id="course-path" class="course-path"></div>
+  </section>
+
+  <aside class="safety-note">
+    <span aria-hidden="true">◎</span><p><strong>A study map, not navigation.</strong> Geometry and route chains are approximate. Always obey signs and use current navigation when details matter.</p>
+  </aside>
 </main>
 
-<div class="game-shell" id="game" hidden>
-  <header class="game-header"><button class="icon-btn" id="close-game" aria-label="Close game">×</button><div class="game-progress" aria-label="Round progress"><i id="progress-bar"></i></div><span id="question-count">1/5</span></header>
-  <main class="game-main">
-    <div class="game-title"><span class="pill" id="mode-pill">TRACE THE ROAD</span><h2 id="question-title">Which road is highlighted?</h2><p id="question-hint"></p></div>
-    <div class="map-card" id="map-card"><svg id="road-map" viewBox="0 0 760 500" role="img" aria-label="Simplified map of major roads around Arlington"></svg><div class="compass" aria-hidden="true">N<br>↑</div><div class="map-note">Simplified prototype network · not to scale</div></div>
-    <div class="study-controls" id="study-controls" hidden><button id="toggle-labels" class="secondary">Hide labels</button><button id="study-quiz" class="primary small">Quiz me</button></div>
-    <div class="answers" id="answers" aria-live="polite"></div>
-    <div class="feedback" id="feedback" hidden><div><strong id="feedback-title"></strong><p id="feedback-copy"></p></div><button class="primary small" id="next-btn">Continue →</button></div>
+<div class="lesson-shell" id="lesson-shell" hidden>
+  <header class="lesson-header">
+    <button class="icon-btn" id="close-lesson" aria-label="Close lesson">×</button>
+    <div class="lesson-progress" aria-label="Lesson progress"><i id="lesson-progress-bar"></i></div>
+    <span id="lesson-count">INTRO</span>
+  </header>
+  <main class="lesson-main" id="lesson-main">
+    <section id="lesson-content"></section>
   </main>
+  <footer class="lesson-footer" id="lesson-footer" hidden>
+    <div><strong id="footer-title"></strong><p id="footer-copy"></p></div>
+    <button class="primary small" id="footer-action">Continue</button>
+  </footer>
 </div>
+
+<div class="map-modal" id="map-modal" hidden role="dialog" aria-modal="true" aria-labelledby="map-title">
+  <div class="map-dialog">
+    <header><div><span class="kicker">STUDY VIEW</span><h2 id="map-title">Your mental map</h2></div><button class="icon-btn" id="close-map" aria-label="Close map">×</button></header>
+    <div class="map-tabs" role="group" aria-label="Map area"><button class="active" data-map-view="local">Local</button><button data-map-view="regional">Regional</button></div>
+    <div class="map-card large"><svg id="study-map" viewBox="0 0 760 500" role="img" aria-label="Simplified study map of unlocked roads and landmarks"></svg><div class="compass" aria-hidden="true">N<br>↑</div><div class="map-note">Approximate study geometry · not to scale</div></div>
+    <div class="map-key"><span><i class="known"></i> Learned</span><span><i class="preview"></i> Next up</span><button class="secondary" id="toggle-labels">Hide labels</button></div>
+  </div>
+</div>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="app.js"></script>
 </body>
