@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101a34">
+  <title>Roadwise Arlington</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to game</a>
+<header class="topbar">
+  <a class="brand" href="#" aria-label="Roadwise home"><span class="brand-mark" aria-hidden="true">↗</span><span>ROADWISE</span></a>
+  <div class="stats" aria-label="Progress">
+    <span title="Current streak">🔥 <strong id="streak">0</strong></span>
+    <span title="Points">✦ <strong id="points">0</strong></span>
+  </div>
+</header>
+<main id="main">
+  <section class="hero" id="home">
+    <div class="eyebrow">ARLINGTON · MA</div>
+    <h1>Know the roads.<br><em>Lose the GPS.</em></h1>
+    <p>Build a mental map of the corridors, turns, and connections that get you around town.</p>
+    <div class="notice"><span aria-hidden="true">◎</span><span><strong>Study tool, not live navigation.</strong> Prototype routes are simplified and must not be used for driving directions.</span></div>
+    <button class="primary" id="start-btn">Start a quick round <span aria-hidden="true">→</span></button>
+  </section>
+
+  <section class="dashboard" aria-labelledby="train-title">
+    <div class="section-heading"><div><span class="kicker">YOUR TRAINING</span><h2 id="train-title">Pick a mode</h2></div><button class="text-btn" id="reset-btn">Reset progress</button></div>
+    <div class="mode-grid">
+      <button class="mode-card coral" data-mode="trace"><span class="mode-icon" aria-hidden="true">〰</span><span><strong>Trace the road</strong><small>Recognize corridors by shape & direction</small></span><span class="arrow">↗</span></button>
+      <button class="mode-card blue" data-mode="connect"><span class="mode-icon" aria-hidden="true">◇</span><span><strong>What connects these?</strong><small>Build the major-road chain</small></span><span class="arrow">↗</span></button>
+      <button class="mode-card lime" data-mode="turn"><span class="mode-icon" aria-hidden="true">↱</span><span><strong>Next turn</strong><small>Choose at a key junction</small></span><span class="arrow">↗</span></button>
+      <button class="mode-card violet" data-mode="map"><span class="mode-icon" aria-hidden="true">⌘</span><span><strong>Mental map</strong><small>Study the whole network</small></span><span class="arrow">↗</span></button>
+    </div>
+  </section>
+
+  <section class="learn-strip" aria-label="Learning goals">
+    <span>YOU'LL LEARN</span><div><b>↔</b> Directions</div><div><b>⊕</b> Intersections</div><div><b>⇄</b> Name changes</div><div><b>◎</b> Destinations</div>
+  </section>
+</main>
+
+<div class="game-shell" id="game" hidden>
+  <header class="game-header"><button class="icon-btn" id="close-game" aria-label="Close game">×</button><div class="game-progress" aria-label="Round progress"><i id="progress-bar"></i></div><span id="question-count">1/5</span></header>
+  <main class="game-main">
+    <div class="game-title"><span class="pill" id="mode-pill">TRACE THE ROAD</span><h2 id="question-title">Which road is highlighted?</h2><p id="question-hint"></p></div>
+    <div class="map-card" id="map-card"><svg id="road-map" viewBox="0 0 760 500" role="img" aria-label="Simplified map of major roads around Arlington"></svg><div class="compass" aria-hidden="true">N<br>↑</div><div class="map-note">Simplified prototype network · not to scale</div></div>
+    <div class="study-controls" id="study-controls" hidden><button id="toggle-labels" class="secondary">Hide labels</button><button id="study-quiz" class="primary small">Quiz me</button></div>
+    <div class="answers" id="answers" aria-live="polite"></div>
+    <div class="feedback" id="feedback" hidden><div><strong id="feedback-title"></strong><p id="feedback-copy"></p></div><button class="primary small" id="next-btn">Continue →</button></div>
+  </main>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="app.js"></script>
+</body>
+</html>
