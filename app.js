@@ -255,45 +255,47 @@ function openLesson(id,review=false){
   $('#lesson-shell').hidden=false; document.body.style.overflow='hidden';
   renderLesson(); $('#close-lesson').focus();
 }
+function uniqueQuestions(items){
+  const seen=new Set();
+  return items.filter(question=>{const key=question.prompt.trim().toLowerCase();if(seen.has(key))return false;seen.add(key);return true;});
+}
 function makeRound(lesson){
+  const lessonIndex=lessons.findIndex(item=>item.id===lesson.id);
+  const own=shuffle(uniqueQuestions(lesson.questions));
+  if(lessonIndex===0)return own.slice(0,4);
+
+  const target=lesson.checkpoint||lesson.destination?5:4;
   const newSet=new Set(lesson.newConcepts);
-  const novel=lesson.questions.filter(q=>q.concepts.some(id=>newSet.has(id))).slice(0,2);
-  const lessonIndex=lessons.findIndex(l=>l.id===lesson.id);
-  const familiarPool=allQuestions.filter(q=>{
-    const sourceIndex=lessons.findIndex(l=>l.id===q.lessonId);
-    return sourceIndex<lessonIndex&&!q.concepts.some(id=>newSet.has(id));
-  });
-  if(lessonIndex===0)return shuffle([...lesson.questions,...lesson.questions]).slice(0,7);
-  const familiar=[];
-  const shuffledFamiliar=shuffle(familiarPool);
-  while(familiar.length<5&&shuffledFamiliar.length)familiar.push(shuffledFamiliar[familiar.length%shuffledFamiliar.length]);
-  if(lesson.destination){
-    const destinationRound=[...lesson.questions];
-    while(destinationRound.length<7&&shuffledFamiliar.length)destinationRound.push(shuffledFamiliar[(destinationRound.length-lesson.questions.length)%shuffledFamiliar.length]);
-    return shuffle(destinationRound).slice(0,7);
-  }
-  const fallback=shuffle(lesson.questions);
-  while(familiar.length<5)familiar.push(fallback[familiar.length%fallback.length]);
-  return shuffle([...novel,...familiar]).slice(0,7);
+  const novel=own.filter(question=>question.concepts.some(id=>newSet.has(id))).slice(0,Math.min(2,target));
+  const prior=shuffle(uniqueQuestions(allQuestions.filter(question=>{
+    const sourceIndex=lessons.findIndex(item=>item.id===question.lessonId);
+    return sourceIndex<lessonIndex&&!novel.some(selected=>selected.prompt===question.prompt);
+  })));
+  const selected=[...novel];
+  for(const question of prior){if(selected.length>=target-1)break;selected.push(question);}
+  for(const question of own){if(selected.length>=target)break;if(!selected.some(item=>item.prompt===question.prompt))selected.push(question);}
+  return shuffle(uniqueQuestions(selected)).slice(0,target);
 }
 function makeReviewLesson(){
   const weak=dueConcepts();
   const available=q=>{const index=lessons.findIndex(l=>l.id===q.lessonId);return progress.completedLessons.includes(q.lessonId)||lessonUnlocked(index);};
   let pool=allQuestions.filter(q=>q.concepts.some(id=>weak.includes(id))&&available(q));
   if(!pool.length)pool=allQuestions.filter(available);
-  const questions=[];
-  while(questions.length<Math.min(7,Math.max(3,pool.length)))questions.push(...shuffle(pool));
-  return {id:'review',title:'Weak spots review',subtitle:'Strengthen the roads that need another pass',icon:'↻',newConcepts:[],questions:questions.slice(0,7),unit:progress.currentUnit};
+  const questions=shuffle(uniqueQuestions(pool)).slice(0,5);
+  return {id:'review',title:'Weak spots review',subtitle:'Strengthen the roads that need another pass',icon:'↻',newConcepts:[],questions,unit:progress.currentUnit};
 }
 function closeLesson(){
   $('#lesson-shell').hidden=true; $('#lesson-footer').hidden=true; document.body.style.overflow=''; session=null; reserveFooter();
 }
 function renderLesson(){
+  const shell=$('#lesson-shell');
+  shell.scrollTop=0;
   const content=$('#lesson-content'); content.replaceChildren();
   $('#lesson-footer').hidden=true; $('#lesson-footer').className='lesson-footer'; reserveFooter();
-  if(session.stage==='intro')return renderIntro(content);
-  if(session.stage==='question')return renderQuestion(content);
-  renderComplete(content);
+  if(session.stage==='intro')renderIntro(content);
+  else if(session.stage==='question')renderQuestion(content);
+  else renderComplete(content);
+  requestAnimationFrame(()=>{shell.scrollTop=0;});
 }
 function renderIntro(content){
   const lesson=session.lesson;
@@ -439,6 +441,6 @@ document.addEventListener('keydown',event=>{
 window.addEventListener('resize',reserveFooter);
 if('ResizeObserver' in window)new ResizeObserver(reserveFooter).observe($('#lesson-footer'));
 
-window.RoadwiseTest={migrateProgress,defaultProgress,makeRound,lessons,concepts};
+window.RoadwiseTest={migrateProgress,defaultProgress,makeRound,uniqueQuestions,lessons,concepts};
 saveProgress();
 })();
