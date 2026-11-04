@@ -8,18 +8,18 @@ const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
 
 const concepts = {
-  mass:{name:'Mass Ave',type:'road',icon:'↔',description:'The east–west spine through Arlington.',view:'local',d:'M55 275 C150 260 235 242 321 231 S490 198 675 174',label:[350,204]},
+  mass:{name:'Mass Ave',type:'road',icon:'↔',description:'The east–west spine through Arlington.',view:'local',d:'M55 275 C150 260 235 242 321 231 C420 240 525 249 675 260',label:[470,270]},
   center:{name:'Arlington Center',type:'landmark',icon:'◎',description:'The central decision point on Mass Ave.',view:'local',point:[321,231]},
-  broadway:{name:'Broadway',type:'road',icon:'↗',description:'Runs east from Arlington Center toward East Arlington and Somerville.',view:'local',d:'M321 231 C390 236 455 227 520 210 S620 183 700 188',label:[472,244]},
+  broadway:{name:'Broadway',type:'road',icon:'→',description:'Branches east from Arlington Center and runs east–west north of Mass Ave toward Somerville.',view:'local',d:'M321 231 C370 214 430 205 500 204 S625 209 700 214',label:[520,190]},
   pleasant:{name:'Pleasant St / Route 60',type:'road',icon:'↓',description:'The major southbound branch from Arlington Center.',view:'local',d:'M321 231 C340 274 353 319 346 365 S315 427 286 477',label:[283,344]},
   mystic:{name:'Mystic Street',type:'road',icon:'↑',description:'Heads north from the Center toward the Mystic Lakes.',view:'local',d:'M321 231 C306 188 315 147 352 112 S430 68 504 48',label:[326,132]},
   centerFork:{name:'Center four-way choice',type:'connection',icon:'✦',description:'At the Center: Mass Ave, Broadway, Pleasant, and Mystic each lead differently.'},
   summer:{name:'Summer Street',type:'road',icon:'↗',description:'A northeast connector from the Center area.',view:'local',d:'M321 231 C353 189 399 151 456 129 S557 102 628 83',label:[435,153]},
   park:{name:'Park Avenue',type:'road',icon:'↘',description:'Links Arlington Heights south toward Route 2.',view:'local',d:'M184 252 C211 287 229 326 239 372 S247 432 262 477',label:[194,348]},
-  lake:{name:'Lake Street',type:'road',icon:'↘',description:'Links East Arlington south toward Alewife and Cambridge.',view:'local',d:'M459 213 C470 258 466 303 448 351 S434 419 454 477',label:[474,321]},
+  lake:{name:'Lake Street',type:'road',icon:'↘',description:'Links East Arlington south toward Alewife and Cambridge.',view:'local',d:'M565 253 C554 300 535 337 510 359 S478 420 482 477',label:[535,325]},
   heights:{name:'Arlington Heights',type:'landmark',icon:'◉',description:'The western Arlington hub on Mass Ave.',view:'local',point:[184,252]},
-  east:{name:'East Arlington',type:'landmark',icon:'◉',description:'The eastern neighborhood near Broadway, Mass Ave, and Lake Street.',view:'local',point:[610,186]},
-  spy:{name:'Spy Pond',type:'landmark',icon:'◒',description:'A strong visual anchor south of Mass Ave.',view:'local',point:[391,291]},
+  east:{name:'East Arlington',type:'landmark',icon:'◉',description:'The eastern neighborhood along Mass Ave, south of Broadway.',view:'local',point:[610,255]},
+  spy:{name:'Spy Pond',type:'landmark',icon:'◒',description:'A strong visual anchor south of Mass Ave.',view:'local',point:[410,315]},
   crossTown:{name:'Cross-town connector choices',type:'connection',icon:'⇄',description:'Park, Lake, and Summer solve different north–south/east–west moves.'},
   r2:{name:'Route 2',type:'road',icon:'═',description:'The major east–west highway along southern Arlington.',view:'local',d:'M42 383 C165 378 263 373 350 364 S542 350 730 339',label:[390,389]},
   alewife:{name:'Alewife',type:'landmark',icon:'🚇',description:'Transit hub and regional gateway southeast of Arlington.',view:'local',point:[430,354]},
@@ -41,10 +41,10 @@ const concepts = {
 };
 
 const regionalRoads = {
-  mass:{name:'Mass Ave',d:'M88 212 C190 218 275 235 347 254 S468 285 545 282',label:[262,230]},
+  mass:{name:'Mass Ave',d:'M88 212 C190 218 275 235 347 254 S468 275 545 280',label:[275,230]},
   r2:{name:'Route 2',d:'M70 305 C177 302 252 300 320 304 S418 310 474 294',label:[205,323]},
   r16:{name:'Route 16 / Parkway',d:'M322 416 C299 366 303 318 350 286 S455 243 520 196 S570 140 589 88',label:[465,241]},
-  broadway:{name:'Broadway / Somerville approach',d:'M256 248 C340 234 437 224 545 226',label:[397,212]},
+  broadway:{name:'Broadway / Somerville approach',d:'M347 254 C395 236 462 230 545 232',label:[438,216]},
   pleasant:{name:'Route 60',d:'M256 248 C267 285 276 322 270 365',label:[250,333]},
   city:{name:'Cambridge / Boston approaches',d:'M350 286 C384 340 440 373 575 390 M545 226 C562 277 574 325 590 350 M575 390 C623 385 663 377 700 370',label:[456,382]}
 };
@@ -67,7 +67,7 @@ const units = [
       c('Which pair forms the first mental-map anchor?',['Mass Ave + Arlington Center','Route 2 + Logan','Park Ave + Fenway'],'Mass Ave + Arlington Center',['mass','center'],'A road plus a decision point makes a useful first scaffold.')
     ]},
     {id:'u1l2',title:'East from the Center',icon:'↗',subtitle:'Broadway and the eastbound choice',newConcepts:['broadway','centerFork'],questions:[
-      c('At Arlington Center, which road heads east toward East Arlington and Somerville?',['Broadway','Mystic Street','Pleasant Street'],'Broadway',['broadway','centerFork'],'Broadway is the clear eastbound branch from the Center.','broadway'),
+      c('At Arlington Center, which road branches east toward Somerville, north of Mass Ave?',['Broadway','Mystic Street','Pleasant Street'],'Broadway',['broadway','centerFork'],'Broadway branches east from the Center and stays north of Mass Ave.','broadway'),
       c('Which road remains your west–east reference through Arlington?',['Mass Ave','Broadway only','Pleasant Street'],'Mass Ave',['mass'],'Mass Ave stays the backbone even as other roads branch away.','mass'),
       chain('Build the simple eastbound chain from the Heights side.',['Mass Ave','Arlington Center','Broadway'],['Broadway','Mass Ave','Arlington Center','Mystic Street'],['mass','center','broadway','centerFork'],'Mass Ave leads to the Center; Broadway branches east.'),
       c('Broadway is best remembered as…',['The eastbound branch from the Center','The highway south of town','The road to Belmont'],'The eastbound branch from the Center',['broadway','centerFork'],'Tie the road name to its decision point.')
@@ -124,7 +124,7 @@ const units = [
       c('Which regional arc helps orient toward Medford?',['Route 16 / Mystic Valley Parkway','Route 2 west','Pleasant Street south'],'Route 16 / Mystic Valley Parkway',['r16','medford'],'The Route 16 arc points toward the Mystic and Medford side.'),
       c('Which Somerville hub is an east/southeast destination concept?',['Davis Square','Wilson Farm','Fresh Pond'],'Davis Square',['davis'],'Davis is reached through the eastern network, not the western gateway.'),
       chain('Choose the high-level Arlington-to-Medford chain.',['Arlington network','Route 16 / Mystic Valley Parkway','Medford'],['Medford','Route 2','Arlington network','Route 16 / Mystic Valley Parkway'],['r16','medford','gateways'],'Route 16 is the major regional orientation cue.'),
-      chain('Choose the high-level Arlington-to-Davis chain.',['Broadway / East Arlington','Somerville network','Davis Square'],['Davis Square','Route 2','Broadway / East Arlington','Somerville network'],['broadway','east','davis','gateways'],'Broadway and the east side set up the Somerville approach.'),
+      chain('Choose the high-level Arlington-to-Davis chain.',['Broadway east','Somerville network','Davis Square'],['Davis Square','Route 2','Broadway east','Somerville network'],['broadway','davis','gateways'],'Broadway stays north of Mass Ave as it sets up the Somerville approach.'),
       c('Which landmark sits south of Alewife?',['Fresh Pond','Wilson Farm','Spy Pond only'],'Fresh Pond',['fresh','alewife'],'Fresh Pond strengthens your Cambridge-side orientation.')
     ]}
   ]},
