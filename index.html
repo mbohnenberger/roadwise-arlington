@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="vendor/leaflet/leaflet.css?v=1.9.4">
-  <link rel="stylesheet" href="styles.css?v=20261104-real-map-3">
+  <link rel="stylesheet" href="styles.css?v=20261104-natural-copy-1">
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
@@ -48,7 +48,7 @@
       <h2>2. Roads</h2><p>Add 3–8 major roads you recognize. Optional direction notes are descriptive only.</p><div id="road-fields" class="field-list"></div><button class="secondary" id="add-road" type="button">+ Add road</button>
     </div>
     <div class="setup-card">
-      <h2>3. Anchors and confirmed relationships</h2><p>Add 3–12 landmarks, stores, gateways, or destinations. Associate each with a road only when you know that relationship.</p><div id="anchor-fields" class="field-list"></div><button class="secondary" id="add-anchor" type="button">+ Add anchor</button>
+      <h2>3. Familiar places and connections</h2><p>Add 3–12 landmarks, stores, entrances, or destinations. Connect each place to a road only when you know they belong together.</p><div id="anchor-fields" class="field-list"></div><button class="secondary" id="add-anchor" type="button">+ Add place</button>
     </div>
     <div class="setup-card finish-card"><label>Course title<input id="custom-title" maxlength="120" placeholder="Roadwise …"></label><p class="draft-warning"><strong>Draft boundary:</strong> Roadwise will create only relationships you submit and will not fabricate road geometry. Courses without reviewed map geometry use the schematic fallback. Review the course before use; it is not navigation.</p><div class="form-actions"><button class="primary" id="generate-course">Generate draft course →</button></div><div id="generate-status" class="status-note" role="alert"></div></div>
   </section>
@@ -58,19 +58,19 @@
     <section class="actions" aria-label="Study actions"><button class="action-card route" id="route-btn" disabled><span class="action-icon" aria-hidden="true">⇢</span><span><strong>Get me from A to B</strong><small id="route-copy">Complete more route lessons to unlock</small></span><span aria-hidden="true">›</span></button><button class="action-card review" id="review-btn"><span class="action-icon" aria-hidden="true">↻</span><span><strong>Review weak spots</strong><small id="review-copy">No reviews due yet</small></span><span aria-hidden="true">›</span></button><button class="action-card explore" id="explore-btn"><span class="action-icon" aria-hidden="true">⌘</span><span><strong>Explore your map</strong><small>Study roads you’ve unlocked</small></span><span aria-hidden="true">›</span></button></section>
     <section class="course-tools" id="course-tools"><button class="secondary" id="edit-course">Edit setup</button><button class="secondary" id="export-course">Export JSON</button></section>
     <section class="path-wrap" aria-labelledby="path-title"><div class="path-heading"><div><span class="kicker">YOUR COURSE</span><h2 id="path-title"></h2></div><button class="text-btn" id="reset-btn">Reset this course</button></div><div id="course-path" class="course-path"></div></section>
-    <aside class="safety-note"><span aria-hidden="true">◎</span><div><p><strong>A study map, not navigation.</strong> Geometry and route chains are approximate. Always obey signs and use current navigation when details matter.</p><p id="course-attribution" class="attribution"></p></div></aside>
+    <aside class="safety-note"><span aria-hidden="true">◎</span><div><p><strong>A study map, not navigation.</strong> Maps and suggested routes are approximate. Always obey signs and use current navigation when details matter.</p><p id="course-attribution" class="attribution"></p></div></aside>
   </section>
 </main>
 
 <div class="import-modal" id="import-modal" hidden role="dialog" aria-modal="true" aria-labelledby="import-title"><div class="import-dialog"><header><h2 id="import-title">Import a course manifest</h2><button class="icon-btn" id="close-import" aria-label="Close import">×</button></header><p>Only version 1 JSON manifests are accepted. Imported content is treated as text and never executed.</p><textarea id="import-json" rows="12" placeholder="Paste exported course JSON"></textarea><div id="import-status" class="status-note" role="alert"></div><button class="primary" id="confirm-import">Validate and import</button></div></div>
 
 <div class="lesson-shell" id="lesson-shell" hidden><header class="lesson-header"><button class="icon-btn" id="close-lesson" aria-label="Close lesson">×</button><div class="lesson-progress" aria-label="Lesson progress"><i id="lesson-progress-bar"></i></div><span id="lesson-count">INTRO</span></header><main class="lesson-main"><section id="lesson-content"></section></main><footer class="lesson-footer" id="lesson-footer" hidden><div><strong id="footer-title"></strong><p id="footer-copy"></p></div><button class="primary small" id="footer-action">Continue</button></footer></div>
-<div class="map-modal" id="map-modal" hidden role="dialog" aria-modal="true" aria-labelledby="map-title"><div class="map-dialog"><header><div><span class="kicker">STUDY VIEW</span><h2 id="map-title">Your mental map</h2></div><button class="icon-btn" id="close-map" aria-label="Close map">×</button></header><div class="map-tabs" role="group" aria-label="Map area"><button class="active" data-map-view="local">Local</button><button data-map-view="regional">Regional</button></div><div class="map-card large"><div class="map-viewport"><div id="study-leaflet" class="leaflet-study-map" aria-label="Interactive map of learned roads and anchors"></div><svg id="study-map" class="study-fallback" viewBox="0 30 760 450" role="img" aria-label="Simplified study map fallback" hidden></svg></div><div class="map-note" id="explore-map-note">Interactive OpenStreetMap study view · not navigation</div></div><div class="map-key"><span><i class="known"></i> Learned</span><span><i class="preview"></i> Next up</span><button class="secondary" id="toggle-labels">Hide labels</button></div></div></div>
+<div class="map-modal" id="map-modal" hidden role="dialog" aria-modal="true" aria-labelledby="map-title"><div class="map-dialog"><header><div><span class="kicker">STUDY VIEW</span><h2 id="map-title">Your mental map</h2></div><button class="icon-btn" id="close-map" aria-label="Close map">×</button></header><div class="map-tabs" role="group" aria-label="Map area"><button class="active" data-map-view="local">Local</button><button data-map-view="regional">Regional</button></div><div class="map-card large"><div class="map-viewport"><div id="study-leaflet" class="leaflet-study-map" aria-label="Interactive map of learned roads and places"></div><svg id="study-map" class="study-fallback" viewBox="0 30 760 450" role="img" aria-label="Simplified study map fallback" hidden></svg></div><div class="map-note" id="explore-map-note">Interactive OpenStreetMap study view · not navigation</div></div><div class="map-key"><span><i class="known"></i> Learned</span><span><i class="preview"></i> Next up</span><button class="secondary" id="toggle-labels">Hide labels</button></div></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script src="core.js?v=20261104-real-map-3"></script>
+<script src="core.js?v=20261104-natural-copy-1"></script>
 <script src="vendor/leaflet/leaflet.js?v=1.9.4"></script>
 <script src="courses/arlington-geodata.js?v=20261104-osm-1"></script>
-<script src="courses/arlington-ma.js?v=20261104-real-map-3"></script>
-<script src="app.js?v=20261104-real-map-3"></script>
+<script src="courses/arlington-ma.js?v=20261104-natural-copy-1"></script>
+<script src="app.js?v=20261104-natural-copy-1"></script>
 </body>
 </html>

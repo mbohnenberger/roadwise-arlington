@@ -93,7 +93,7 @@ const exploreDense=Core.buildMapModel(arlington,{mode:'explore',view:'local',lea
 const fullExplore=Core.buildMapModel(arlington,{mode:'explore',view:'local',learnedIds:allArlingtonIds,labels:true});assertBoxesDoNotOverlap([...fullExplore.roads,...fullExplore.anchors].filter(item=>item.label),'full Arlington Explore labels');
 const denseSvg=Core.renderMapSvg(denseModel);assert.match(denseSvg,/class="road active"/);assert.match(denseSvg,/class="callout-leader"/);assert.match(denseSvg,/Whole Foods Market/);assert.doesNotMatch(denseSvg,/Spy Pond/,'SVG snapshot included an unrelated landmark');
 
-const storeRoute=Core.allQuestions(arlington).find(q=>/Whole Foods to Trader Joe/.test(q.prompt)),routeModel=Core.buildMapModel(arlington,{mode:'lesson',view:'local',concepts:storeRoute.concepts,highlight:storeRoute.map,learnedIds:['mass'],labels:true});
+const storeRoute=Core.allQuestions(arlington).find(q=>q.type==='chain'&&q.answer.includes('Arlington Heights / Trader Joe’s')),routeModel=Core.buildMapModel(arlington,{mode:'lesson',view:'local',concepts:storeRoute.concepts,highlight:storeRoute.map,learnedIds:['mass'],labels:true});
 const routePointIds=storeRoute.concepts.filter(id=>arlington.concepts[id]?.point&&(arlington.concepts[id].view||'local')==='local'),routeRoadIds=storeRoute.concepts.filter(id=>arlington.concepts[id]?.type==='road');
 assert.deepEqual(new Set(routeModel.anchors.map(a=>a.id)),new Set(routePointIds),'route map omitted a referenced anchor');assert.ok(routeRoadIds.every(id=>routeModel.roads.some(r=>r.id===id&&r.state==='active')),'route map omitted a referenced road');
 
@@ -135,6 +135,7 @@ assert.ok(fs.statSync('vendor/leaflet/leaflet.js').size>100000&&fs.statSync('ven
 
 // Preserve Arlington geography/content regressions from b2b1d9b.
 const concepts=arlington.concepts,lessons=Core.flatLessons(arlington),allQuestions=Core.allQuestions(arlington);
+const learnerPrompts=allQuestions.map(q=>q.prompt).join('\n');assert.doesNotMatch(learnerPrompts,/roads and anchors|route chain|high-level anchors/i,'learner prompts expose internal curriculum jargon');assert.ok(allQuestions.filter(q=>q.type==='chain').every(q=>/^(How|What)\b/.test(q.prompt)),'route prompts should read as natural questions');
 assert.ok(!/northeast|from (the )?center/i.test(concepts.summer.description));assert.ok(concepts.summer.d.startsWith('M346 181')&&concepts.summer.label[0]<concepts.center.point[0]);
 assert.match(concepts.broadway.description,/north of Mass Ave/i);assert.equal(concepts.broadway.d,'M321 231 C370 214 430 205 500 204 S625 209 700 214');
 for(const id of ['mysticLakes','belmont','highArena','reservoir','somerville','cambridge','lexingtonLocal','wholeFoods','stopShop','traderJoes'])assert.ok(concepts[id],`missing Arlington anchor ${id}`);

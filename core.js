@@ -177,13 +177,13 @@ function generateCourse(place,options={}){
   const routeQs=[];
   for(const r of roads){const on=confirmed.filter(a=>a.roadId===r.id);for(let i=0;i<on.length;i++)for(let j=i+1;j<on.length;j++){
     const a=on[i],b=on[j],forward=[a.name,r.name,b.name],reverse=[b.name,r.name,a.name],choices=[a.name,b.name,r.name];
-    routeQs.push(chain(`Which confirmed route connects ${a.name} to ${b.name}?`,forward,choices,[a.id,r.id,b.id],`Both anchors were associated with ${r.name}.`,r.id));
-    routeQs.push(chain(`Which confirmed reverse route connects ${b.name} to ${a.name}?`,reverse,choices,[b.id,r.id,a.id],`This reverses only the relationship you confirmed.`,r.id));
+    routeQs.push(chain(`How do you get from ${a.name} to ${b.name}?`,forward,choices,[a.id,r.id,b.id],`Both places are on ${r.name}.`,r.id));
+    routeQs.push(chain(`How do you get from ${b.name} to ${a.name}?`,reverse,choices,[b.id,r.id,a.id],`This follows the same road in the other direction.`,r.id));
   }}
   if(!routeQs.length) throw new Error('Put at least 2 anchors on the same road to create A→B practice.');
   const units=[
     {id:'1',title:'Recognize the roads',subtitle:'Your submitted local backbone',color:'#ff8a72',ink:'#45170e',lessons:[{id:'roads',title:'Major roads',icon:'↔',subtitle:'Recognize the roads you entered',newConcepts:roads.map(r=>r.id),questions:roadQs}]},
-    {id:'2',title:'Place the anchors',subtitle:'Only confirmed road relationships',color:'#b9dc59',ink:'#253407',lessons:[{id:'anchors',title:'Road to anchor',icon:'◆',subtitle:'Connect anchors to their submitted roads',newConcepts:anchors.map(a=>a.id),questions:relationshipQs}]},
+    {id:'2',title:'Connect familiar places',subtitle:'Places and the roads you know',color:'#b9dc59',ink:'#253407',lessons:[{id:'anchors',title:'Places and roads',icon:'◆',subtitle:'Connect each familiar place to its road',newConcepts:anchors.map(a=>a.id),questions:relationshipQs}]},
     {id:'3',title:'Practice routes',subtitle:'Outbound and reverse chains',color:'#75a8ff',ink:'#0c2855',lessons:[{id:'routes',title:'A to B',icon:'⇢',subtitle:'Practice confirmed relationships in both directions',newConcepts:[],checkpoint:true,questions:routeQs}]}
   ];
   const bounds={south:Math.max(-90,center.lat-0.08),west:Math.max(-180,center.lon-0.1),north:Math.min(90,center.lat+0.08),east:Math.min(180,center.lon+0.1)};
