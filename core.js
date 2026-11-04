@@ -63,6 +63,19 @@ function sanitizeProgress(raw,course){
 function nonnegative(v){const n=Number(v);return Number.isFinite(n)&&n>=0?Math.floor(n):0;}
 function flatLessons(course){return course.units.flatMap(unit=>unit.lessons.map(lesson=>({...lesson,unit:unit.id})));}
 function allQuestions(course){return flatLessons(course).flatMap(lesson=>lesson.questions.map(question=>({...question,lessonId:lesson.id})));}
+function routePhrase(value){return String(value||'').toLowerCase().replace(/[’']/g,'').replace(/[^a-z0-9]+/g,' ').replace(/\b(the|side|direction|area|terminal|gateway)\b/g,' ').replace(/\s+/g,' ').trim();}
+function sameRoutePlace(a,b){const x=routePhrase(a),y=routePhrase(b);return !!x&&!!y&&(x===y||(x.length>4&&y.startsWith(x+' '))||(y.length>4&&x.startsWith(y+' ')));}
+function routeEndpoints(prompt){let match=String(prompt||'').match(/\bfrom (.+?)\s+(?:to|toward)\s+(.+?)(?:\?|$)/i);if(match)return{origin:match[1].trim(),destination:match[2].trim()};match=String(prompt||'').match(/\bto (.+?)\s+from\s+(.+?)(?:\?|$)/i);return match?{origin:match[2].trim(),destination:match[1].trim()}:null;}
+function routeDecisionQuestions(question){
+  if(!isObject(question)||question.type!=='chain'||!Array.isArray(question.answer)||!Array.isArray(question.choices))return question?[clone(question)]:[];
+  const endpoints=routeEndpoints(question.prompt);if(!endpoints)return[];
+  const steps=[...question.answer];if(steps.length&&sameRoutePlace(endpoints.origin,steps[0]))steps.shift();if(!steps.length)return[];
+  const indexes=steps.length>2?[0,1]:[0];
+  return indexes.map(index=>{
+    const answer=steps[index],from=index===0?endpoints.origin:steps[index-1],pool=[answer,...question.choices,...steps].filter((value,i,all)=>value&&!sameRoutePlace(value,from)&&all.indexOf(value)===i),choices=[answer,...pool.filter(value=>value!==answer).slice(0,3)];
+    return {...clone(question),type:'choice',prompt:`From ${from}, what comes next toward ${endpoints.destination}?`,choices,answer,why:index===0?question.why:`After ${from}, the next useful point is ${answer}.`,routeDecision:true,routeOrigin:endpoints.origin,routeDestination:endpoints.destination,routeStep:index};
+  });
+}
 
 function validateCourse(input){
   const errors=[];
@@ -314,5 +327,5 @@ const courseGenerator={
   }
 };
 
-return {COURSE_SCHEMA_VERSION,STORE_VERSION,STORE_KEY,LEGACY_KEY,MAX_GEOMETRY_COORDINATES,TILE_PROVIDER,TILE_PROVIDERS,defaultProgress,sanitizeProgress,flatLessons,allQuestions,validateCourse,validateGeometry,parseCourseJSON,emptyStore,readStore,writeStore,saveCustomCourse,switchCourse,archiveCourse,removeCourse,resetCourse,generateCourse,conceptHasGeo,courseHasGeo,selectGeoFeatures,calculateGeoBounds,planMap,buildMapModel,renderMapSvg,estimateLabelWidth,validTileProvider,resolveTileProvider,locationProvider,courseGenerator,uniqueId,clone};
+return {COURSE_SCHEMA_VERSION,STORE_VERSION,STORE_KEY,LEGACY_KEY,MAX_GEOMETRY_COORDINATES,TILE_PROVIDER,TILE_PROVIDERS,defaultProgress,sanitizeProgress,flatLessons,allQuestions,routeDecisionQuestions,validateCourse,validateGeometry,parseCourseJSON,emptyStore,readStore,writeStore,saveCustomCourse,switchCourse,archiveCourse,removeCourse,resetCourse,generateCourse,conceptHasGeo,courseHasGeo,selectGeoFeatures,calculateGeoBounds,planMap,buildMapModel,renderMapSvg,estimateLabelWidth,validTileProvider,resolveTileProvider,locationProvider,courseGenerator,uniqueId,clone};
 });
