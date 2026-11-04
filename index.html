@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="vendor/leaflet/leaflet.css?v=1.9.4">
-  <link rel="stylesheet" href="styles.css?v=20261104-real-map-1">
+  <link rel="stylesheet" href="styles.css?v=20261104-real-map-2">
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
@@ -65,12 +65,12 @@
 <div class="import-modal" id="import-modal" hidden role="dialog" aria-modal="true" aria-labelledby="import-title"><div class="import-dialog"><header><h2 id="import-title">Import a course manifest</h2><button class="icon-btn" id="close-import" aria-label="Close import">×</button></header><p>Only version 1 JSON manifests are accepted. Imported content is treated as text and never executed.</p><textarea id="import-json" rows="12" placeholder="Paste exported course JSON"></textarea><div id="import-status" class="status-note" role="alert"></div><button class="primary" id="confirm-import">Validate and import</button></div></div>
 
 <div class="lesson-shell" id="lesson-shell" hidden><header class="lesson-header"><button class="icon-btn" id="close-lesson" aria-label="Close lesson">×</button><div class="lesson-progress" aria-label="Lesson progress"><i id="lesson-progress-bar"></i></div><span id="lesson-count">INTRO</span></header><main class="lesson-main"><section id="lesson-content"></section></main><footer class="lesson-footer" id="lesson-footer" hidden><div><strong id="footer-title"></strong><p id="footer-copy"></p></div><button class="primary small" id="footer-action">Continue</button></footer></div>
-<div class="map-modal" id="map-modal" hidden role="dialog" aria-modal="true" aria-labelledby="map-title"><div class="map-dialog"><header><div><span class="kicker">STUDY VIEW</span><h2 id="map-title">Your mental map</h2></div><button class="icon-btn" id="close-map" aria-label="Close map">×</button></header><div class="map-tabs" role="group" aria-label="Map area"><button class="active" data-map-view="local">Local</button><button data-map-view="regional">Regional</button></div><div class="map-card large"><div class="map-viewport"><div id="study-leaflet" class="leaflet-study-map" aria-label="Interactive map of learned roads and anchors"></div><svg id="study-map" viewBox="0 30 760 450" role="img" aria-label="Simplified study map fallback" hidden></svg></div><div class="map-note" id="explore-map-note">Interactive OpenStreetMap study view · not navigation</div></div><div class="map-key"><span><i class="known"></i> Learned</span><span><i class="preview"></i> Next up</span><button class="secondary" id="toggle-labels">Hide labels</button></div></div></div>
+<div class="map-modal" id="map-modal" hidden role="dialog" aria-modal="true" aria-labelledby="map-title"><div class="map-dialog"><header><div><span class="kicker">STUDY VIEW</span><h2 id="map-title">Your mental map</h2></div><button class="icon-btn" id="close-map" aria-label="Close map">×</button></header><div class="map-tabs" role="group" aria-label="Map area"><button class="active" data-map-view="local">Local</button><button data-map-view="regional">Regional</button></div><div class="map-card large"><div class="map-viewport"><div id="study-leaflet" class="leaflet-study-map" aria-label="Interactive map of learned roads and anchors"></div><svg id="study-map" class="study-fallback" viewBox="0 30 760 450" role="img" aria-label="Simplified study map fallback" hidden></svg></div><div class="map-note" id="explore-map-note">Interactive OpenStreetMap study view · not navigation</div></div><div class="map-key"><span><i class="known"></i> Learned</span><span><i class="preview"></i> Next up</span><button class="secondary" id="toggle-labels">Hide labels</button></div></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script src="core.js?v=20261104-real-map-1"></script>
+<script src="core.js?v=20261104-real-map-2"></script>
 <script src="vendor/leaflet/leaflet.js?v=1.9.4"></script>
 <script src="courses/arlington-geodata.js?v=20261104-osm-1"></script>
-<script src="courses/arlington-ma.js?v=20261104-real-map-1"></script>
-<script src="app.js?v=20261104-real-map-1"></script>
+<script src="courses/arlington-ma.js?v=20261104-real-map-2"></script>
+<script src="app.js?v=20261104-real-map-2"></script>
 </body>
 </html>

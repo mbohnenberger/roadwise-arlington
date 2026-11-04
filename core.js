@@ -254,7 +254,7 @@ function calculateGeoBounds(features,fallback){
   return {south,west,north,east};
 }
 function planMap(course,options={}){
-  const features=selectGeoFeatures(course,options),active=features.filter(feature=>feature.state==='active'),activeAnchors=active.filter(feature=>feature.location),fitFeatures=(options.mode||'lesson')==='lesson'?(activeAnchors.length?activeAnchors:active):features,bounds=calculateGeoBounds(fitFeatures.length?fitFeatures:features,course?.bounds),focusNames=(options.concepts||[]).map(id=>course?.concepts?.[id]?.name).filter(Boolean);
+  const features=selectGeoFeatures(course,options),active=features.filter(feature=>feature.state==='active'),fitFeatures=(options.mode||'lesson')==='lesson'?active:features,bounds=calculateGeoBounds(fitFeatures.length?fitFeatures:features,course?.bounds),focusNames=(options.concepts||[]).map(id=>course?.concepts?.[id]?.name).filter(Boolean);
   const providerId=course?.map?.tileProvider||'osm-standard',tileProvider=resolveTileProvider(providerId,options.tileProviders);
   const hasActiveGeo=features.some(feature=>feature.state==='active');
   return {renderer:features.length&&tileProvider&&(options.mode!=='lesson'||hasActiveGeo)?'leaflet':'svg',features,bounds,center:course?.center?{lat:Number(course.center.lat),lon:Number(course.center.lon)}:null,focusNames,tileProvider};
