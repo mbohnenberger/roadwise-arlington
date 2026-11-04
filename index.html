@@ -4,88 +4,70 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0d1730">
-  <meta name="description" content="Learn Arlington's major roads, connections, and destination gateways through short progressive lessons.">
+  <meta name="description" content="Roadwise helps you build and practice mental-map courses for places you care about.">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Roadwise">
-  <title>Roadwise Arlington</title>
+  <title>Roadwise</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261104-2">
+  <link rel="stylesheet" href="styles.css?v=20261104-platform-1">
 </head>
 <body>
-<a class="skip-link" href="#course">Skip to course</a>
+<a class="skip-link" href="#main">Skip to content</a>
 <header class="topbar">
-  <a class="brand" href="#course" aria-label="Roadwise course home"><span class="brand-mark" aria-hidden="true">↗</span><span>ROADWISE</span></a>
-  <div class="stats" aria-label="Course statistics">
-    <span title="Daily streak">🔥 <strong id="streak">0</strong></span>
-    <span title="Experience points">✦ <strong id="xp">0</strong></span>
+  <button class="brand brand-button" id="brand-home" aria-label="Roadwise course library"><span class="brand-mark" aria-hidden="true">↗</span><span>ROADWISE</span></button>
+  <div class="top-actions">
+    <button class="library-back" id="library-back" hidden>← Library</button>
+    <div class="stats" id="stats" hidden aria-label="Course statistics"><span title="Daily streak">🔥 <strong id="streak">0</strong></span><span title="Experience points">✦ <strong id="xp">0</strong></span></div>
   </div>
 </header>
 
-<main id="course" class="course-shell">
-  <section class="course-hero" aria-labelledby="course-title">
-    <div>
-      <span class="eyebrow">ARLINGTON · MA</span>
-      <h1 id="course-title">Build your<br><em>mental map.</em></h1>
-      <p>Start with the town’s backbone. Add connectors, gateways, and the journeys you actually make.</p>
+<main id="main">
+  <section id="library-view" class="library-shell" aria-labelledby="library-title">
+    <div class="library-hero"><span class="eyebrow">YOUR MENTAL MAPS</span><h1 id="library-title">Learn a place.<br><em>Keep the map.</em></h1><p>Keep multiple courses on this device, switch anytime, or build a reviewed draft from places and relationships you know.</p></div>
+    <div class="library-heading"><div><span class="kicker">COURSE LIBRARY</span><h2>Your courses</h2></div><button class="primary small" id="create-course">Create a course</button></div>
+    <div id="course-library" class="course-grid"></div>
+    <p class="local-only"><strong>Stored only in this browser.</strong> This static demo has no account, cloud sync, or cross-device backup. Export custom courses you want to keep.</p>
+  </section>
+
+  <section id="setup-view" class="setup-shell" hidden aria-labelledby="setup-title">
+    <div class="setup-heading"><button class="text-btn" id="cancel-setup">← Back to library</button><span class="eyebrow">CUSTOM COURSE STUDIO</span><h1 id="setup-title">Choose a place.</h1><p>Search only when you submit, or click the world map and enter a place name manually. No autocomplete or background location requests.</p></div>
+    <div class="setup-card">
+      <h2>1. Place</h2>
+      <form id="place-search" class="search-row"><label class="sr-only" for="place-query">Search for a town, city, or region</label><input id="place-query" maxlength="160" placeholder="Town, city, or region" required><button class="primary small" type="submit">Search place</button></form>
+      <p class="field-help">Explicit-submit prototype search uses public Nominatim at low volume (© OpenStreetMap contributors). If it fails, manual setup still works.</p>
+      <div class="world-picker" id="world-picker" role="application" tabindex="0" aria-label="World coordinate picker. Click, or use arrow keys to set latitude and longitude; hold Shift for ten-degree steps.">
+        <svg viewBox="0 0 720 360" role="img" aria-label="Simplified equirectangular world selector"><rect width="720" height="360" class="ocean"/><path class="continent" d="M65 70 L180 45 255 92 225 145 185 155 150 220 92 186 45 120Z M250 205 L315 195 350 255 325 338 280 300Z M365 68 L440 42 510 72 550 55 665 85 650 158 575 165 530 225 455 210 430 150 375 132Z M535 238 L615 230 665 285 625 330 550 305Z"/><g class="grid"><path d="M0 90H720M0 180H720M0 270H720M180 0V360M360 0V360M540 0V360"/></g><circle id="world-marker" cx="360" cy="180" r="8" hidden/></svg>
+      </div>
+      <div id="search-status" class="status-note" role="status"></div><div id="location-results" class="location-results"></div>
+      <div class="coordinate-row"><label>Place name<input id="manual-place" maxlength="120" placeholder="Required for manual draft"></label><label>Latitude<input id="place-lat" type="number" min="-90" max="90" step="any" value="0"></label><label>Longitude<input id="place-lon" type="number" min="-180" max="180" step="any" value="0"></label></div>
     </div>
-    <div class="summary-card" aria-live="polite">
-      <div><strong id="roads-known">0</strong><span>roads known</span></div>
-      <i aria-hidden="true"></i>
-      <div><strong id="connections-known">0</strong><span>connections</span></div>
-      <div class="summary-progress"><span id="summary-copy">Your first road is ready</span><b><i id="course-progress"></i></b></div>
+    <div class="setup-card">
+      <h2>2. Roads</h2><p>Add 3–8 major roads you recognize. Optional direction notes are descriptive only.</p><div id="road-fields" class="field-list"></div><button class="secondary" id="add-road" type="button">+ Add road</button>
     </div>
+    <div class="setup-card">
+      <h2>3. Anchors and confirmed relationships</h2><p>Add 3–12 landmarks, stores, gateways, or destinations. Associate each with a road only when you know that relationship.</p><div id="anchor-fields" class="field-list"></div><button class="secondary" id="add-anchor" type="button">+ Add anchor</button>
+    </div>
+    <div class="setup-card finish-card"><label>Course title<input id="custom-title" maxlength="120" placeholder="Roadwise …"></label><p class="draft-warning"><strong>Draft boundary:</strong> Roadwise will create only relationships you submit. Review the course before use; it is not navigation.</p><div class="form-actions"><button class="primary" id="generate-course">Generate draft course →</button></div><div id="generate-status" class="status-note" role="alert"></div></div>
   </section>
 
-  <section class="actions" aria-label="Study actions">
-    <button class="action-card route" id="route-btn" disabled>
-      <span class="action-icon" aria-hidden="true">⇢</span><span><strong>Get me from A to B</strong><small id="route-copy">Complete more route lessons to unlock</small></span><span aria-hidden="true">›</span>
-    </button>
-    <button class="action-card review" id="review-btn">
-      <span class="action-icon" aria-hidden="true">↻</span><span><strong>Review weak spots</strong><small id="review-copy">No reviews due yet</small></span><span aria-hidden="true">›</span>
-    </button>
-    <button class="action-card explore" id="explore-btn">
-      <span class="action-icon" aria-hidden="true">⌘</span><span><strong>Explore your map</strong><small>Study roads you’ve unlocked</small></span><span aria-hidden="true">›</span>
-    </button>
+  <section id="course-view" class="course-shell" hidden>
+    <section class="course-hero" aria-labelledby="course-title"><div><span class="eyebrow" id="course-region"></span><span class="draft-badge" id="draft-badge" hidden>DRAFT · REVIEW REQUIRED</span><h1 id="course-title"></h1><p id="course-description"></p></div><div class="summary-card" aria-live="polite"><div><strong id="roads-known">0</strong><span>roads known</span></div><i aria-hidden="true"></i><div><strong id="connections-known">0</strong><span>connections</span></div><div class="summary-progress"><span id="summary-copy">Your first road is ready</span><b><i id="course-progress"></i></b></div></div></section>
+    <section class="actions" aria-label="Study actions"><button class="action-card route" id="route-btn" disabled><span class="action-icon" aria-hidden="true">⇢</span><span><strong>Get me from A to B</strong><small id="route-copy">Complete more route lessons to unlock</small></span><span aria-hidden="true">›</span></button><button class="action-card review" id="review-btn"><span class="action-icon" aria-hidden="true">↻</span><span><strong>Review weak spots</strong><small id="review-copy">No reviews due yet</small></span><span aria-hidden="true">›</span></button><button class="action-card explore" id="explore-btn"><span class="action-icon" aria-hidden="true">⌘</span><span><strong>Explore your map</strong><small>Study roads you’ve unlocked</small></span><span aria-hidden="true">›</span></button></section>
+    <section class="course-tools" id="course-tools"><button class="secondary" id="edit-course">Edit setup</button><button class="secondary" id="export-course">Export JSON</button></section>
+    <section class="path-wrap" aria-labelledby="path-title"><div class="path-heading"><div><span class="kicker">YOUR COURSE</span><h2 id="path-title"></h2></div><button class="text-btn" id="reset-btn">Reset this course</button></div><div id="course-path" class="course-path"></div></section>
+    <aside class="safety-note"><span aria-hidden="true">◎</span><div><p><strong>A study map, not navigation.</strong> Geometry and route chains are approximate. Always obey signs and use current navigation when details matter.</p><p id="course-attribution" class="attribution"></p></div></aside>
   </section>
-
-  <section class="path-wrap" aria-labelledby="path-title">
-    <div class="path-heading"><div><span class="kicker">YOUR COURSE</span><h2 id="path-title">Arlington outward</h2></div><button class="text-btn" id="reset-btn">Reset</button></div>
-    <div id="course-path" class="course-path"></div>
-  </section>
-
-  <aside class="safety-note">
-    <span aria-hidden="true">◎</span><p><strong>A study map, not navigation.</strong> Geometry and route chains are approximate. Always obey signs and use current navigation when details matter.</p>
-  </aside>
 </main>
 
-<div class="lesson-shell" id="lesson-shell" hidden>
-  <header class="lesson-header">
-    <button class="icon-btn" id="close-lesson" aria-label="Close lesson">×</button>
-    <div class="lesson-progress" aria-label="Lesson progress"><i id="lesson-progress-bar"></i></div>
-    <span id="lesson-count">INTRO</span>
-  </header>
-  <main class="lesson-main" id="lesson-main">
-    <section id="lesson-content"></section>
-  </main>
-  <footer class="lesson-footer" id="lesson-footer" hidden>
-    <div><strong id="footer-title"></strong><p id="footer-copy"></p></div>
-    <button class="primary small" id="footer-action">Continue</button>
-  </footer>
-</div>
+<div class="import-modal" id="import-modal" hidden role="dialog" aria-modal="true" aria-labelledby="import-title"><div class="import-dialog"><header><h2 id="import-title">Import a course manifest</h2><button class="icon-btn" id="close-import" aria-label="Close import">×</button></header><p>Only version 1 JSON manifests are accepted. Imported content is treated as text and never executed.</p><textarea id="import-json" rows="12" placeholder="Paste exported course JSON"></textarea><div id="import-status" class="status-note" role="alert"></div><button class="primary" id="confirm-import">Validate and import</button></div></div>
 
-<div class="map-modal" id="map-modal" hidden role="dialog" aria-modal="true" aria-labelledby="map-title">
-  <div class="map-dialog">
-    <header><div><span class="kicker">STUDY VIEW</span><h2 id="map-title">Your mental map</h2></div><button class="icon-btn" id="close-map" aria-label="Close map">×</button></header>
-    <div class="map-tabs" role="group" aria-label="Map area"><button class="active" data-map-view="local">Local</button><button data-map-view="regional">Regional</button></div>
-    <div class="map-card large"><svg id="study-map" viewBox="0 0 760 500" role="img" aria-label="Simplified study map of unlocked roads and landmarks"></svg><div class="compass" aria-hidden="true">N<br>↑</div><div class="map-note">Approximate study geometry · not to scale</div></div>
-    <div class="map-key"><span><i class="known"></i> Learned</span><span><i class="preview"></i> Next up</span><button class="secondary" id="toggle-labels">Hide labels</button></div>
-  </div>
-</div>
-
+<div class="lesson-shell" id="lesson-shell" hidden><header class="lesson-header"><button class="icon-btn" id="close-lesson" aria-label="Close lesson">×</button><div class="lesson-progress" aria-label="Lesson progress"><i id="lesson-progress-bar"></i></div><span id="lesson-count">INTRO</span></header><main class="lesson-main"><section id="lesson-content"></section></main><footer class="lesson-footer" id="lesson-footer" hidden><div><strong id="footer-title"></strong><p id="footer-copy"></p></div><button class="primary small" id="footer-action">Continue</button></footer></div>
+<div class="map-modal" id="map-modal" hidden role="dialog" aria-modal="true" aria-labelledby="map-title"><div class="map-dialog"><header><div><span class="kicker">STUDY VIEW</span><h2 id="map-title">Your mental map</h2></div><button class="icon-btn" id="close-map" aria-label="Close map">×</button></header><div class="map-tabs" role="group" aria-label="Map area"><button class="active" data-map-view="local">Local</button><button data-map-view="regional">Regional</button></div><div class="map-card large"><svg id="study-map" viewBox="0 0 760 500" role="img" aria-label="Simplified study map of unlocked roads and landmarks"></svg><div class="compass" aria-hidden="true">N<br>↑</div><div class="map-note">Approximate study geometry · not to scale</div></div><div class="map-key"><span><i class="known"></i> Learned</span><span><i class="preview"></i> Next up</span><button class="secondary" id="toggle-labels">Hide labels</button></div></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script src="app.js?v=20261104-2"></script>
+<script src="core.js?v=20261104-platform-1"></script>
+<script src="courses/arlington-ma.js?v=20261104-platform-1"></script>
+<script src="app.js?v=20261104-platform-1"></script>
 </body>
 </html>
