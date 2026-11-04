@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261104-1">
+  <link rel="stylesheet" href="styles.css?v=20261104-2">
 </head>
 <body>
 <a class="skip-link" href="#course">Skip to course</a>
@@ -40,6 +40,9 @@
   </section>
 
   <section class="actions" aria-label="Study actions">
+    <button class="action-card route" id="route-btn" disabled>
+      <span class="action-icon" aria-hidden="true">⇢</span><span><strong>Get me from A to B</strong><small id="route-copy">Complete more route lessons to unlock</small></span><span aria-hidden="true">›</span>
+    </button>
     <button class="action-card review" id="review-btn">
       <span class="action-icon" aria-hidden="true">↻</span><span><strong>Review weak spots</strong><small id="review-copy">No reviews due yet</small></span><span aria-hidden="true">›</span>
     </button>
@@ -83,6 +86,6 @@
 </div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script src="app.js?v=20261104-1"></script>
+<script src="app.js?v=20261104-2"></script>
 </body>
 </html>

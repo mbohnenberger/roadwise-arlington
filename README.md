@@ -1,18 +1,22 @@
 # Roadwise Arlington
 
-A dependency-free, mobile-first course for building a practical mental map of Arlington, Massachusetts and its regional gateways. Roadwise teaches a sparse network progressively: recognize a corridor, connect it to familiar anchors, choose the next major direction, and rehearse useful destination journeys.
+A dependency-free, mobile-first course for building a practical mental map of Arlington, Massachusetts and its regional gateways. Roadwise teaches every major corridor through explicit destination anchors, then rehearses useful “Which roads take me from A to B?” chains.
 
 ## Course
 
-The vertical course path unlocks one lesson at a time. Each normal round mixes recognition, route-chain, and next-decision questions internally rather than asking the learner to choose a mode. Once prior material exists, rounds target roughly **70% familiar recall / 30% newer material**, and each lesson introduces at most 2–3 concepts.
+The vertical course path unlocks one lesson at a time. Each normal round draws a fresh 4–5 question mix from the current lesson and eligible prior route chains; checkpoints draw 5–6. Prompts are de-duplicated inside every round.
 
-- **Unit 1 — Arlington backbone:** Mass Ave, Arlington Center, Broadway, Pleasant Street / Route 60, Mystic Street.
-- **Unit 2 — Cross-town connectors:** Summer Street, Park Avenue, Lake Street, Arlington Heights, East Arlington, Spy Pond.
+- **Unit 1 — Arlington backbone:** Mass Ave to Lexington/Cambridge, with Whole Foods, Stop & Shop, and Trader Joe’s as recognizable points along the spine; Broadway to Somerville/Teele; Pleasant Street / Route 60 to Belmont Center; and Mystic Street to Mystic Lakes/Winchester.
+- **Unit 2 — Cross-town connectors:** the corrected west/northwest Summer Street corridor through Arlington High, Ed Burns Arena, and Arlington Reservoir; Park Avenue to Route 2; Lake Street to Alewife/Cambridge; Arlington Heights, East Arlington, and Spy Pond.
 - **Unit 3 — Regional gateways:** Route 2, Route 16 / Alewife Brook Parkway / Mystic Valley Parkway, Alewife, Fresh Pond, Lexington / Wilson Farm, Medford, and Davis Square.
 - **Unit 4 — Destination journeys:** Fenway Park and downtown / TD Garden, including primary and alternate gateway concepts and the reverse trip home.
 - **Unit 5 — Airport journey:** Logan Airport at a high level, with an explicit reminder that tunnels, ramps, traffic, construction, and the terminal approach require current GPS guidance.
 
-Checkpoints emphasize ordered route chains through previously learned anchors. The compact **Explore map** switches between local and regional study views and only reveals learned roads plus a preview of what comes next.
+Checkpoints emphasize outbound and reverse/home chains through previously learned anchors. The compact **Explore map** switches between local and regional study views and progressively reveals learned roads and named destination anchors plus a preview of what comes next.
+
+After at least four route chains have been learned, the dashboard unlocks **Get me from A to B**. This dedicated route quiz generates a fresh 4–5 question round using only chain questions from completed lessons; it never exposes locked curriculum.
+
+Commercial landmarks reflect locations verified when the curriculum was updated and may move, close, or change names. Store anchors are kept as ordinary entries in the editable `concepts` data near the top of `app.js`; they support orientation but do not replace the more stable civic and geographic anchors.
 
 ## Progress and review
 
@@ -57,10 +61,11 @@ The redesign was checked with:
 
 ```bash
 node --check app.js
+node test-regression.js
 python3 -m http.server 8765
 curl -I http://127.0.0.1:8765/
 curl -I http://127.0.0.1:8765/styles.css
 curl -I http://127.0.0.1:8765/app.js
 ```
 
-Additional source/state checks cover the old `points/streak/answered` migration path, the complete curriculum and destination data, localStorage schema fields, review scheduling, and the dynamic `--footer-space` / safe-area CSS path.
+The deterministic regression script checks prompt uniqueness, normal/checkpoint bounds, unlocked-only route practice, corrected Summer Street and preserved Broadway geometry, required anchor concepts, and key outbound/reverse A→B chains. Additional source/state checks cover the old `points/streak/answered` migration path, localStorage schema fields, review scheduling, and the dynamic `--footer-space` / safe-area CSS path.
