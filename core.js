@@ -11,12 +11,39 @@ const STORE_KEY='roadwise-platform-v1';
 const LEGACY_KEY='roadwise-progress';
 const COURSE_TYPES=new Set(['road','landmark','store','gateway','destination','connection']);
 const QUESTION_TYPES=new Set(['choice','chain']);
+const MAP_VIEWS=new Set(['local','regional']);
+const LABEL_ALIGNS=new Set(['left','center','right']);
 const MAX_TEXT=500;
+const MAX_GEOMETRY_COORDINATES=5000;
+const TILE_PROVIDER=Object.freeze({
+  id:'osm-standard',
+  url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+  options:Object.freeze({maxZoom:19,attribution:'© OpenStreetMap contributors',attributionUrl:'https://www.openstreetmap.org/copyright'})
+});
+const TILE_PROVIDERS=Object.freeze({'osm-standard':TILE_PROVIDER});
 const isObject=v=>!!v&&typeof v==='object'&&!Array.isArray(v);
 const text=(v,max=MAX_TEXT)=>typeof v==='string'&&v.trim()&&v.length<=max;
 const clone=v=>JSON.parse(JSON.stringify(v));
 const finite=(v,min=-Infinity,max=Infinity)=>Number.isFinite(Number(v))&&Number(v)>=min&&Number(v)<=max;
 const safeId=v=>typeof v==='string'&&/^[a-z0-9][a-z0-9_-]{0,63}$/i.test(v)&&!['__proto__','prototype','constructor'].includes(v);
+
+function validPosition(value){return Array.isArray(value)&&value.length===2&&finite(value[0],-180,180)&&finite(value[1],-90,90);}
+function geometryLines(value){
+  if(Array.isArray(value)){if(value.length&&validPosition(value[0]))return [value];if(value.length&&Array.isArray(value[0])&&validPosition(value[0][0]))return value;return [];}
+  return value?.type==='LineString'?[value.coordinates]:value?.type==='MultiLineString'?value.coordinates:[];
+}
+function validateGeometry(value,maxCoordinates=MAX_GEOMETRY_COORDINATES){
+  if(!Array.isArray(value)&&(!isObject(value)||!['LineString','MultiLineString'].includes(value.type)||!Array.isArray(value.coordinates))) return false;
+  const lines=geometryLines(value);
+  if(!lines.length||lines.some(line=>!Array.isArray(line)||line.length<2))return false;
+  let count=0;
+  for(const line of lines)for(const position of line){count++;if(count>maxCoordinates||!validPosition(position))return false;}
+  return true;
+}
+function validLocation(value){return isObject(value)&&finite(value.lat,-90,90)&&finite(value.lon,-180,180);}
+function normalizeGeometry(value){return {type:'MultiLineString',coordinates:clone(geometryLines(value))};}
+function validTileProvider(provider){return isObject(provider)&&text(provider.id,64)&&text(provider.url,500)&&/^https:\/\//i.test(provider.url)&&['{z}','{x}','{y}'].every(token=>provider.url.includes(token))&&isObject(provider.options)&&finite(provider.options.maxZoom,1,24)&&text(provider.options.attribution,120)&&!/[<>"']/.test(provider.options.attribution)&&text(provider.options.attributionUrl,500)&&/^https:\/\//i.test(provider.options.attributionUrl);}
+function resolveTileProvider(id='osm-standard',overrides={}){const providers={...TILE_PROVIDERS,...(isObject(overrides)?overrides:{})},provider=providers[id]||providers['osm-standard'];return validTileProvider(provider)?provider:null;}
 
 function defaultProgress(){
   return {version:2,xp:0,streak:0,lastActive:null,currentUnit:1,completedLessons:[],conceptMastery:{},reviewDue:{},answered:0,mistakes:0};
@@ -47,7 +74,15 @@ function validateCourse(input){
   if(!isObject(input.bounds)||!finite(input.bounds.south,-90,90)||!finite(input.bounds.north,-90,90)||!finite(input.bounds.west,-180,180)||!finite(input.bounds.east,-180,180)||Number(input.bounds.south)>=Number(input.bounds.north)||Number(input.bounds.west)>=Number(input.bounds.east)) errors.push('bounds must contain ordered south/west/north/east coordinates.');
   if(!isObject(input.attribution)||!text(input.attribution.text,300)) errors.push('attribution.text is required.');
   if(input.attribution?.url!==undefined&&input.attribution.url!==''&&(!text(input.attribution.url,500)||!/^https:\/\//i.test(input.attribution.url))) errors.push('attribution.url must be empty or HTTPS.');
-  if(!isObject(input.map)||!Array.isArray(input.map.viewBox)||input.map.viewBox.length!==4||!input.map.viewBox.every(n=>finite(n,-100000,100000))) errors.push('map.viewBox must contain four finite values.');
+  if(!isObject(input.map)||!Array.isArray(input.map.viewBox)||input.map.viewBox.length!==4||!input.map.viewBox.every(n=>finite(n,-100000,100000))||Number(input.map.viewBox?.[2])<=0||Number(input.map.viewBox?.[3])<=0) errors.push('map.viewBox must contain x/y and positive width/height values.');
+  if(input.map?.backgroundPaths!==undefined){
+    if(!Array.isArray(input.map.backgroundPaths)||input.map.backgroundPaths.length>20) errors.push('map.backgroundPaths must be an array of at most 20 paths.');
+    else input.map.backgroundPaths.forEach((path,i)=>{
+      if(!isObject(path)||!text(path.d,2000)||!MAP_VIEWS.has(path.view||'local')||!['water','terrain'].includes(path.kind||'terrain')||(path.opacity!==undefined&&!finite(path.opacity,0,1))) errors.push(`map.backgroundPaths[${i}] is invalid.`);
+    });
+  }
+  if(input.map?.tileProvider!==undefined&&!safeId(input.map.tileProvider)) errors.push('map.tileProvider must be a safe provider identifier.');
+  if(input.map?.featureProvenance!==undefined&&(!isObject(input.map.featureProvenance)||!text(input.map.featureProvenance.text,300)||!text(input.map.featureProvenance.license,80)||!text(input.map.featureProvenance.url,500)||!/^https:\/\//i.test(input.map.featureProvenance.url)||(input.map.featureProvenance.retrieved!==undefined&&!/^\d{4}-\d{2}-\d{2}$/.test(input.map.featureProvenance.retrieved)))) errors.push('map.featureProvenance must contain text, license, an HTTPS URL, and an optional ISO retrieval date.');
   if(!isObject(input.generator)||!text(input.generator.kind,80)) errors.push('generator metadata is required.');
   if(!isObject(input.concepts)||!Object.keys(input.concepts).length) errors.push('concepts must be a non-empty object.');
   else for(const [id,c] of Object.entries(input.concepts)){
@@ -55,6 +90,12 @@ function validateCourse(input){
     if(c.description!==undefined&&!text(c.description,MAX_TEXT)) errors.push(`concept ${id} has an invalid description.`);
     if(c.point!==undefined&&(!Array.isArray(c.point)||c.point.length!==2||!c.point.every(n=>finite(n,-100000,100000)))) errors.push(`concept ${id} has an invalid point.`);
     if(c.d!==undefined&&!text(c.d,1000)) errors.push(`concept ${id} has invalid geometry.`);
+    if(c.label!==undefined&&(!Array.isArray(c.label)||c.label.length!==2||!c.label.every(n=>finite(n,-100000,100000)))) errors.push(`concept ${id} has an invalid road label position.`);
+    if(c.labelOffset!==undefined&&(!Array.isArray(c.labelOffset)||c.labelOffset.length!==2||!c.labelOffset.every(n=>finite(n,-1000,1000)))) errors.push(`concept ${id} has an invalid labelOffset.`);
+    if(c.labelAlign!==undefined&&!LABEL_ALIGNS.has(c.labelAlign)) errors.push(`concept ${id} has an invalid labelAlign.`);
+    if(c.view!==undefined&&!MAP_VIEWS.has(c.view)) errors.push(`concept ${id} has an invalid map view.`);
+    if(c.geometry!==undefined&&!validateGeometry(c.geometry)) errors.push(`concept ${id} has invalid or oversized geospatial geometry.`);
+    if(c.location!==undefined&&!validLocation(c.location)) errors.push(`concept ${id} has an invalid location.`);
   }
   const conceptIds=new Set(isObject(input.concepts)?Object.keys(input.concepts):[]),unitIds=new Set(),lessonIds=new Set();
   if(!Array.isArray(input.units)||!input.units.length) errors.push('units must be a non-empty array.');
@@ -151,6 +192,109 @@ function generateCourse(place,options={}){
   const valid=validateCourse(generated);if(!valid.ok)throw new Error(`Generated draft is invalid: ${valid.errors[0]}`);return generated;
 }
 
+// Dependency-free map layout shared by the browser renderer and Node regression tests.
+const MAP_LABEL_FONT=12;
+const CALLOUT_HEIGHT=28;
+function estimateLabelWidth(value,fontSize=MAP_LABEL_FONT){return Math.max(46,Math.min(190,Math.ceil(String(value||'').length*fontSize*.57+18)));}
+function overlaps(a,b,gap=4){return a.x<b.x+b.width+gap&&a.x+a.width+gap>b.x&&a.y<b.y+b.height+gap&&a.y+a.height+gap>b.y;}
+function inBounds(box,bounds,pad=6){return box.x>=bounds.x+pad&&box.y>=bounds.y+pad&&box.x+box.width<=bounds.x+bounds.width-pad&&box.y+box.height<=bounds.y+bounds.height-pad;}
+function clampBox(box,bounds,pad=6){return {...box,x:Math.max(bounds.x+pad,Math.min(box.x,bounds.x+bounds.width-box.width-pad)),y:Math.max(bounds.y+pad,Math.min(box.y,bounds.y+bounds.height-box.height-pad))};}
+function clearBox(box,occupied,bounds){return inBounds(box,bounds)&&!occupied.some(other=>overlaps(box,other));}
+function alignedBox(point,offset,align,width,height=CALLOUT_HEIGHT){
+  let x=point[0]+offset[0];if(align==='right')x-=width;else if(align==='center')x-=width/2;
+  return {x:Math.round(x),y:Math.round(point[1]+offset[1]-height/2),width,height};
+}
+function fallbackOffsets(width){return [[14,-28],[14,20],[-14,-28,'right'],[-14,20,'right'],[18,-52],[-18,-52,'right'],[18,48],[-18,48,'right'],[0,-64,'center'],[0,60,'center'],[34,0],[-34,0,'right']];}
+function placeLabel(point,name,metadata,occupied,bounds){
+  const width=estimateLabelWidth(name),authored=metadata?.labelOffset;
+  const candidates=[];
+  if(Array.isArray(authored))candidates.push([authored[0],authored[1],metadata.labelAlign||'left']);
+  candidates.push(...fallbackOffsets(width));
+  let box=null;
+  for(const [dx,dy,align='left'] of candidates){const candidate=alignedBox(point,[dx,dy],align,width);if(clearBox(candidate,occupied,bounds)){box=candidate;break;}}
+  if(!box){
+    // Deterministic final scan keeps custom courses legible without browser text measurement.
+    for(let y=bounds.y+8;y<=bounds.y+bounds.height-CALLOUT_HEIGHT-8&&!box;y+=CALLOUT_HEIGHT+6){
+      for(let x=bounds.x+8;x<=bounds.x+bounds.width-width-8;x+=Math.max(58,Math.floor(width*.6))){const candidate={x,y,width,height:CALLOUT_HEIGHT};if(clearBox(candidate,occupied,bounds)){box=candidate;break;}}
+    }
+  }
+  box=clampBox(box||alignedBox(point,[14,-28],'left',width),bounds);occupied.push(box);
+  const endX=Math.max(box.x,Math.min(point[0],box.x+box.width)),endY=Math.max(box.y,Math.min(point[1],box.y+box.height));
+  return {...box,point:{x:point[0],y:point[1]},leader:{x1:point[0],y1:point[1],x2:Math.round(endX),y2:Math.round(endY)}};
+}
+function placeRoadLabel(position,name,occupied,bounds){
+  const width=estimateLabelWidth(name,11),height=24,point=[Number(position[0]),Number(position[1])];
+  const candidates=[[0,0,'center'],[0,-25,'center'],[0,25,'center'],[42,0,'left'],[-42,0,'right']];let box=null;
+  for(const [dx,dy,align] of candidates){const candidate=alignedBox(point,[dx,dy],align,width,height);if(clearBox(candidate,occupied,bounds)){box=candidate;break;}}
+  box=clampBox(box||alignedBox(point,[0,0],'center',width,height),bounds);occupied.push(box);return {...box,point:{x:point[0],y:point[1]}};
+}
+function conceptView(concept){return concept?.view||'local';}
+function conceptHasGeo(concept){return validateGeometry(concept?.geometry)||validLocation(concept?.location);}
+function courseHasGeo(course){return Object.values(course?.concepts||{}).some(conceptHasGeo);}
+function selectGeoFeatures(course,options={}){
+  const mode=options.mode||'lesson',view=options.view||'local',focus=new Set(options.concepts||[]),learned=new Set(options.learnedIds||[]),preview=new Set(options.previewIds||[]);
+  if(options.highlight)focus.add(options.highlight);
+  const features=[];
+  for(const [id,concept] of Object.entries(course?.concepts||{})){
+    if((mode==='explore'&&conceptView(concept)!==view)||!conceptHasGeo(concept))continue;
+    const active=focus.has(id),isLearned=learned.has(id),isPreview=preview.has(id);
+    if(mode==='lesson'&&!active&&!(concept.type==='road'&&isLearned))continue;
+    if(mode==='explore'&&!active&&!isLearned&&!isPreview)continue;
+    features.push({id,name:concept.name,type:concept.type,state:active?'active':mode==='lesson'?'context':isPreview?'preview':'learned',geometry:validateGeometry(concept.geometry)?normalizeGeometry(concept.geometry):null,location:validLocation(concept.location)?{lat:Number(concept.location.lat),lon:Number(concept.location.lon)}:null});
+  }
+  return features;
+}
+function calculateGeoBounds(features,fallback){
+  let south=Infinity,west=Infinity,north=-Infinity,east=-Infinity,count=0;
+  const add=(lat,lon)=>{if(!finite(lat,-90,90)||!finite(lon,-180,180))return;south=Math.min(south,Number(lat));north=Math.max(north,Number(lat));west=Math.min(west,Number(lon));east=Math.max(east,Number(lon));count++;};
+  for(const feature of features||[]){if(feature.location)add(feature.location.lat,feature.location.lon);for(const line of geometryLines(feature.geometry))for(const [lon,lat] of line)add(lat,lon);}
+  if(!count&&fallback&&finite(fallback.south,-90,90)&&finite(fallback.north,-90,90)&&finite(fallback.west,-180,180)&&finite(fallback.east,-180,180))return {south:Number(fallback.south),west:Number(fallback.west),north:Number(fallback.north),east:Number(fallback.east)};
+  if(!count)return null;
+  if(south===north){south-=.002;north+=.002;}if(west===east){west-=.002;east+=.002;}
+  return {south,west,north,east};
+}
+function planMap(course,options={}){
+  const features=selectGeoFeatures(course,options),active=features.filter(feature=>feature.state==='active'),activeAnchors=active.filter(feature=>feature.location),fitFeatures=(options.mode||'lesson')==='lesson'?(activeAnchors.length?activeAnchors:active):features,bounds=calculateGeoBounds(fitFeatures.length?fitFeatures:features,course?.bounds),focusNames=(options.concepts||[]).map(id=>course?.concepts?.[id]?.name).filter(Boolean);
+  const providerId=course?.map?.tileProvider||'osm-standard',tileProvider=resolveTileProvider(providerId,options.tileProviders);
+  const hasActiveGeo=features.some(feature=>feature.state==='active');
+  return {renderer:features.length&&tileProvider&&(options.mode!=='lesson'||hasActiveGeo)?'leaflet':'svg',features,bounds,center:course?.center?{lat:Number(course.center.lat),lon:Number(course.center.lon)}:null,focusNames,tileProvider};
+}
+function buildMapModel(course,options={}){
+  const view=options.view||'local',mode=options.mode||'explore',labels=options.labels!==false;
+  const learned=new Set(options.learnedIds||[]),preview=new Set(options.previewIds||[]),focus=new Set(options.concepts||[]);
+  if(options.highlight)focus.add(options.highlight);
+  const sourceRoads=view==='local'?course.concepts:(course.map?.regionalRoads||{}),bounds={x:Number(course.map?.viewBox?.[0]||0),y:Number(course.map?.viewBox?.[1]||0),width:Number(course.map?.viewBox?.[2]||760),height:Number(course.map?.viewBox?.[3]||500)};
+  const roads=[],anchors=[],occupied=[];
+  for(const [id,road] of Object.entries(sourceRoads||{})){
+    if(view==='local'&&road.type!=='road')continue;if(!road.d)continue;
+    const active=focus.has(id),isLearned=learned.has(id),isPreview=preview.has(id);
+    if(mode==='lesson'?!active&&!isLearned:!isLearned&&!isPreview&&!active)continue;
+    const state=active?'active':mode==='lesson'?'context':isPreview?'preview':'learned';
+    const item={id,name:road.name||id,d:road.d,state};
+    if(labels&&road.label)item.label={...placeRoadLabel(road.label,item.name,occupied,bounds),state};
+    roads.push(item);
+  }
+  for(const [id,concept] of Object.entries(course.concepts||{})){
+    if(!concept.point||conceptView(concept)!==view)continue;
+    const active=focus.has(id),isKnown=learned.has(id),isPreview=preview.has(id);
+    if(mode==='lesson'?!active:!active&&!isKnown&&!isPreview)continue;
+    const state=active?'active':isPreview?'preview':'learned',item={id,name:concept.name,icon:concept.icon||'◆',point:{x:concept.point[0],y:concept.point[1]},state};
+    if(labels)item.label={...placeLabel(concept.point,concept.name,concept,occupied,bounds),state};
+    anchors.push(item);
+  }
+  const backgrounds=(course.map?.backgroundPaths||[]).filter(path=>(path.view||'local')===view).map((path,i)=>({id:`background-${i}`,d:path.d,kind:path.kind||'terrain',opacity:path.opacity===undefined?1:Number(path.opacity)}));
+  const focusNames=[...focus].map(id=>(view==='regional'?course.map?.regionalRoads?.[id]:null)?.name||course.concepts?.[id]?.name).filter(Boolean);
+  return {view,mode,bounds,region:course.region,backgrounds,roads,anchors,focusIds:[...focus],focusNames};
+}
+function escapeXml(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[ch]));}
+function renderMapSvg(model){
+  const b=model.bounds,parts=[`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${b.x} ${b.y} ${b.width} ${b.height}" role="img">`];
+  for(const path of model.backgrounds)parts.push(`<path class="map-background ${escapeXml(path.kind)}" d="${escapeXml(path.d)}" opacity="${path.opacity}"/>`);
+  for(const road of model.roads){parts.push(`<path class="road ${road.state}" data-concept="${escapeXml(road.id)}" d="${escapeXml(road.d)}"/>`);if(road.label){const l=road.label;parts.push(`<g class="road-label ${road.state}" data-label-for="${escapeXml(road.id)}"><rect x="${l.x}" y="${l.y}" width="${l.width}" height="${l.height}" rx="12"/><text x="${l.x+l.width/2}" y="${l.y+16}" text-anchor="middle">${escapeXml(road.name)}</text></g>`);}}
+  for(const anchor of model.anchors){const p=anchor.point;parts.push(`<g class="map-anchor ${anchor.state}" data-concept="${escapeXml(anchor.id)}"><circle class="anchor-halo" cx="${p.x}" cy="${p.y}" r="10"/><circle class="anchor-dot" cx="${p.x}" cy="${p.y}" r="5"/><text class="anchor-icon" x="${p.x}" y="${p.y+4}" text-anchor="middle">${escapeXml(anchor.icon)}</text>`);if(anchor.label){const l=anchor.label;parts.push(`<path class="callout-leader" d="M${l.leader.x1} ${l.leader.y1} L${l.leader.x2} ${l.leader.y2}"/><rect class="callout-box" x="${l.x}" y="${l.y}" width="${l.width}" height="${l.height}" rx="8"/><text class="callout-text" x="${l.x+9}" y="${l.y+18}">${escapeXml(anchor.name)}</text>`);}parts.push('</g>');}
+  parts.push('</svg>');return parts.join('');
+}
+
 const locationProvider={
   endpoint:'https://nominatim.openstreetmap.org/search',cache:new Map(),lastRequestAt:0,
   async search(query,fetchImpl){
@@ -170,5 +314,5 @@ const courseGenerator={
   }
 };
 
-return {COURSE_SCHEMA_VERSION,STORE_VERSION,STORE_KEY,LEGACY_KEY,defaultProgress,sanitizeProgress,flatLessons,allQuestions,validateCourse,parseCourseJSON,emptyStore,readStore,writeStore,saveCustomCourse,switchCourse,archiveCourse,removeCourse,resetCourse,generateCourse,locationProvider,courseGenerator,uniqueId,clone};
+return {COURSE_SCHEMA_VERSION,STORE_VERSION,STORE_KEY,LEGACY_KEY,MAX_GEOMETRY_COORDINATES,TILE_PROVIDER,TILE_PROVIDERS,defaultProgress,sanitizeProgress,flatLessons,allQuestions,validateCourse,validateGeometry,parseCourseJSON,emptyStore,readStore,writeStore,saveCustomCourse,switchCourse,archiveCourse,removeCourse,resetCourse,generateCourse,conceptHasGeo,courseHasGeo,selectGeoFeatures,calculateGeoBounds,planMap,buildMapModel,renderMapSvg,estimateLabelWidth,validTileProvider,resolveTileProvider,locationProvider,courseGenerator,uniqueId,clone};
 });

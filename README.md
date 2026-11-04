@@ -1,6 +1,6 @@
 # Roadwise
 
-Roadwise is a dependency-free, mobile-first static web app for building and practicing mental maps. The original Arlington course from commit `b2b1d9b` is preserved as the built-in seed; the player now consumes a generic versioned course manifest.
+Roadwise is a mobile-first static web app for building and practicing mental maps. The original Arlington course from commit `b2b1d9b` is preserved as the built-in seed; the player now consumes a generic versioned course manifest. Leaflet 1.9.4 is vendored locally for real-map rendering, with no runtime JavaScript/CSS CDN.
 
 ## What works in the static demo
 
@@ -12,13 +12,15 @@ Roadwise is a dependency-free, mobile-first static web app for building and prac
 - Users enter 3–8 roads and 3–12 anchors with types, optional direction notes, and confirmed road associations.
 - The fallback generates a short progressive draft covering road recognition, road-to-anchor relationships, forward A→B routes, reverse routes, and a route-practice pool.
 - The generator creates routes only between anchors the user associated with the same submitted road. It does not invent geography.
-- Arlington retains its course path, mastery/review mechanics, route quizzes, local/regional map, corrected geography, destination anchors, accessible controls, and dynamic mobile feedback-footer spacing.
+- Arlington retains its course path, mastery/review mechanics, route quizzes, corrected geography, destination anchors, accessible controls, and dynamic mobile feedback-footer spacing. Lessons and Explore use a real Leaflet/OpenStreetMap basemap when visible concepts have reviewed static geospatial data; the collision-aware SVG remains the offline/missing-geometry fallback.
 
 There is **no account, cloud sync, backend generation, or cross-device backup** in this version. Export custom manifests you want to keep. Every generated course is visibly marked **draft** until reviewed. Roadwise is a study tool, not navigation.
 
 ## Architecture
 
 - `courses/arlington-ma.js` — portable Arlington schema-v1 seed manifest, preserved from `b2b1d9b`
+- `courses/arlington-geodata.js` — simplified static OSM-derived road geometry, anchor coordinates, source way IDs, and retrieval provenance
+- `vendor/leaflet/` — locally vendored Leaflet 1.9.4 assets and BSD-2-Clause license
 - `core.js` — schema validation, safe JSON import, progress/store migration, course lifecycle, provider interfaces, static generator, production API adapter
 - `app.js` — library, setup/editor, generic course player, map, quizzes, import/export
 - `index.html` / `styles.css` — mobile-first application shell and visual system
@@ -32,7 +34,15 @@ No build step, framework, package manager, credentials, analytics, or service wo
 
 Search happens **only after explicit form submission**. There is no client-side autocomplete, background querying, or query-as-you-type behavior. The replaceable prototype adapter calls public Nominatim with `format=jsonv2`, `limit=5`, origin referrer policy, attribution, a one-request-per-second guard, and an in-memory query cache. Browser JavaScript cannot set a reliable custom `User-Agent`; no private email or credential is sent. Requests may still be rate-limited, blocked, or unavailable, and the UI falls back to map-picked coordinates plus a manually entered place name.
 
-Public Nominatim is suitable only for this low-volume prototype interaction under its usage policy. It is not the production course-generation backend. OpenStreetMap attribution is shown for search results and retained in generated metadata where used. No public Overpass enrichment is enabled in this version.
+Public Nominatim is suitable only for this low-volume prototype interaction under its usage policy. It is not the production course-generation backend. OpenStreetMap attribution is shown for search results and retained in generated metadata where used. No public Overpass enrichment is enabled at runtime; Arlington’s road geometry was extracted once and committed as static data.
+
+## Basemap and Arlington geodata
+
+The replaceable map adapter defaults to `https://tile.openstreetmap.org/{z}/{x}/{y}.png`, maximum zoom 19, with visible clickable `© OpenStreetMap contributors` attribution. It makes normal browser requests only for the current human-visible viewport: there is no tile prefetch, bulk download, service worker, offline cache, or restrictive referrer policy. Standard public OSM tiles are best-effort and appropriate here only for a low-volume prototype; production must switch to a suitable commercial provider or self-hosted tiles.
+
+Arlington road overlays and anchor coordinates were derived from OpenStreetMap contributors in a one-time authoring pass on **2026-11-04**, using Overpass for ways and Nominatim for anchors, then simplified into static course data. The manifest records ODbL 1.0 provenance and source way IDs. No runtime Overpass request is made. Geometry is a teaching overlay, not precise routing.
+
+If basemap tiles fail, Leaflet keeps the course geometry visible against a neutral background and offers the schematic fallback. Custom studio courses do not fabricate lines; without reviewed geometry they use the schematic map.
 
 ## Production architecture
 
@@ -64,8 +74,12 @@ git diff --check
 python3 -m http.server 8765
 curl -fsS http://127.0.0.1:8765/ >/dev/null
 curl -fsS http://127.0.0.1:8765/core.js >/dev/null
+curl -fsS http://127.0.0.1:8765/app.js >/dev/null
 curl -fsS http://127.0.0.1:8765/courses/arlington-ma.js >/dev/null
+curl -fsS http://127.0.0.1:8765/courses/arlington-geodata.js >/dev/null
 curl -fsS http://127.0.0.1:8765/styles.css >/dev/null
+curl -fsS http://127.0.0.1:8765/vendor/leaflet/leaflet.js >/dev/null
+curl -fsS http://127.0.0.1:8765/vendor/leaflet/leaflet.css >/dev/null
 ```
 
-The deterministic suite verifies schema validation, Arlington seed loading, exact-once legacy migration, per-course isolation/switch/reset behavior, generated draft shape, no invented routes, reverse A→B creation, route unlock isolation, malformed import rejection, preserved Arlington geography, and mobile/footer regressions.
+The deterministic suite verifies schema validation (including malformed and oversized GeoJSON), Arlington seed/geodata, feature selection and bounds, tile-provider policy and attribution, SVG fallback selection, exact-once legacy migration, per-course isolation, generated draft shape, no invented routes, route unlock isolation, preserved Arlington geography, and mobile/footer regressions.

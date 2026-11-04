@@ -19,7 +19,21 @@ Roadwise manifests are inert JSON-compatible data. `core.js` exports `validateCo
   "pathTitle": "Place starter path",
   "heroTitle": "Build your local mental map.",
   "concepts": {},
-  "map": { "viewBox": [0, 0, 760, 500], "regionalRoads": {}, "landmarks": {} },
+  "map": {
+    "viewBox": [0, 0, 760, 450],
+    "regionalRoads": {},
+    "landmarks": {},
+    "tileProvider": "osm-standard",
+    "featureProvenance": {
+      "text": "Features derived from OpenStreetMap contributors",
+      "license": "ODbL 1.0",
+      "url": "https://www.openstreetmap.org/copyright",
+      "retrieved": "2026-11-04"
+    },
+    "backgroundPaths": [
+      { "view": "local", "kind": "water", "opacity": 0.5, "d": "M…Z" }
+    ]
+  },
   "units": [],
   "generator": { "kind": "static-manual-draft", "version": 1, "reviewed": false }
 }
@@ -35,8 +49,19 @@ Required identity fields are `schemaVersion`, safe `id`, `title`, and `region`. 
 - `type`: `road`, `landmark`, `store`, `gateway`, `destination`, or `connection`
 - optional `description`, `icon`, and `view` (`local` or `regional`)
 - optional SVG study geometry: a road `d` path and `[x,y]` label, or landmark `[x,y]` point
+- optional landmark callout metadata: `labelOffset: [dx,dy]` and `labelAlign: "left" | "center" | "right"`
+- optional geospatial road `geometry`: GeoJSON `LineString` / `MultiLineString`, or equivalent `[lon,lat]` coordinate arrays
+- optional anchor `location: { "lat": 42.0, "lon": -71.0 }`
 
-Geometry is intentionally approximate study geometry, not a routable graph. Production route generation should consume a separate normalized road graph and emit reviewed study geometry.
+SVG geometry is intentionally approximate study geometry, not a routable graph. Geospatial road geometry is limited to line types, valid longitude/latitude pairs, and 5,000 coordinates per concept. Polygon, point, malformed, out-of-range, and oversized geometry is rejected. Production route generation should consume a separate normalized road graph and emit reviewed study geometry.
+
+When selected concepts have geospatial features, the player uses locally vendored Leaflet and a replaceable tile-provider registry. The prototype provider ID `osm-standard` resolves to the exact URL `https://tile.openstreetmap.org/{z}/{x}/{y}.png` with visible `© OpenStreetMap contributors` attribution linked to the OSM copyright page. The player performs normal interactive tile loading only: no tile prefetch, bulk/offline download, cache bypass, runtime Overpass, or restrictive referrer policy. Production traffic should move to a suitable OSM-derived or commercial provider.
+
+Arlington road and anchor features are a committed static extraction with OSM/ODbL provenance. Lesson selection highlights current-question features, allows learned roads as subtle context, excludes unrelated anchors, and fits to active anchors when present. Explore selects learned/next features. If Leaflet or tiles fail, or a custom course lacks geospatial detail, the existing SVG renderer remains the explicit fallback.
+
+`map.backgroundPaths` is optional fallback-only decorative geography. Each entry is limited to inert SVG path data, a `local` or `regional` view, a `water` or `terrain` kind, and optional opacity from 0–1. The static custom-course generator deliberately emits no background paths; it must not infer or fabricate water. When fallback callout offsets are absent, the player estimates label width from text and uses a deterministic collision fallback that does not depend on browser text measurement.
+
+Lesson maps derive their active roads and anchors from the current question’s `concepts`. Learned roads may remain as low-emphasis context, while unrelated learned landmarks are omitted. Explore maps continue to show learned and next-up concepts with the same collision-aware callouts.
 
 ## Units, lessons, and questions
 

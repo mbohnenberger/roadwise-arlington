@@ -2,6 +2,7 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const Core=require('./core.js');
+const arlingtonGeodata=require('./courses/arlington-geodata.js');
 const arlington=require('./courses/arlington-ma.js');
 const app=require('./app.js');
 
@@ -73,6 +74,64 @@ const fullState=Core.emptyStore();assert.equal(Core.saveCustomCourse(new FullSto
 const polar=Core.generateCourse({name:'North Edge',displayName:'North Edge',lat:90,lon:180},{...inputs,id:'north-edge',existingIds:[]});assert.equal(Core.validateCourse(polar).ok,true);assert.ok(polar.bounds.north<=90&&polar.bounds.east<=180);
 const textOnly=Core.clone(generated);textOnly.title='<img src=x onerror=alert(1)>';assert.equal(Core.validateCourse(textOnly).ok,true,'HTML-like user text should remain inert text, not require execution or sanitizing markup');
 const appSource=fs.readFileSync('app.js','utf8');assert.doesNotMatch(appSource,/\.innerHTML\s*=/,'custom UI must not render with innerHTML');assert.match(appSource,/course\.map\?\.viewBox/,'generic player must honor manifest viewBox');assert.match(appSource,/clearSelectedPlace/,'manual edits must clear stale provider metadata');
+
+// Map render model: lesson focus is question-scoped and hierarchy is explicit.
+const allArlingtonIds=Object.keys(arlington.concepts),lessonFocus=Core.buildMapModel(arlington,{mode:'lesson',view:'local',concepts:['mass','wholeFoods'],highlight:'mass',learnedIds:allArlingtonIds,labels:true});
+assert.deepEqual(lessonFocus.anchors.map(a=>a.id),['wholeFoods'],'lesson map leaked unrelated learned landmarks');
+assert.equal(lessonFocus.roads.find(r=>r.id==='mass').state,'active');
+assert.equal(lessonFocus.roads.find(r=>r.id==='broadway').state,'context');
+assert.equal(lessonFocus.roads.find(r=>r.id==='broadway').label.state,'context','dim road label did not track its dim road');
+assert.match(Core.renderMapSvg(lessonFocus),/class="road-label context"/);
+assert.ok(lessonFocus.focusNames.includes('Mass Ave')&&lessonFocus.focusNames.includes('Whole Foods Market'));
+assert.match(appSource,/concepts:q\.concepts/,'current question concepts must be passed into drawMap');
+
+function assertBoxesDoNotOverlap(items,message){for(let i=0;i<items.length;i++)for(let j=i+1;j<items.length;j++){const a=items[i].label,b=items[j].label;const overlap=a.x<b.x+b.width&&a.x+a.width>b.x&&a.y<b.y+b.height&&a.y+a.height>b.y;assert.equal(overlap,false,`${message}: ${items[i].id} overlaps ${items[j].id}`);}}
+const denseIds=['center','heights','wholeFoods','stopShop','traderJoes','east'];
+const denseModel=Core.buildMapModel(arlington,{mode:'lesson',view:'local',concepts:['mass',...denseIds],highlight:'mass',learnedIds:['mass'],labels:true});
+assert.deepEqual(new Set(denseModel.anchors.map(a=>a.id)),new Set(denseIds));assertBoxesDoNotOverlap(denseModel.anchors,'Arlington dense callouts');
+const exploreDense=Core.buildMapModel(arlington,{mode:'explore',view:'local',learnedIds:['mass',...denseIds],labels:true});assert.deepEqual(new Set(exploreDense.anchors.map(a=>a.id)),new Set(denseIds));assertBoxesDoNotOverlap(exploreDense.anchors,'Arlington Explore callouts');
+const fullExplore=Core.buildMapModel(arlington,{mode:'explore',view:'local',learnedIds:allArlingtonIds,labels:true});assertBoxesDoNotOverlap([...fullExplore.roads,...fullExplore.anchors].filter(item=>item.label),'full Arlington Explore labels');
+const denseSvg=Core.renderMapSvg(denseModel);assert.match(denseSvg,/class="road active"/);assert.match(denseSvg,/class="callout-leader"/);assert.match(denseSvg,/Whole Foods Market/);assert.doesNotMatch(denseSvg,/Spy Pond/,'SVG snapshot included an unrelated landmark');
+
+const storeRoute=Core.allQuestions(arlington).find(q=>/Whole Foods to Trader Joe/.test(q.prompt)),routeModel=Core.buildMapModel(arlington,{mode:'lesson',view:'local',concepts:storeRoute.concepts,highlight:storeRoute.map,learnedIds:['mass'],labels:true});
+const routePointIds=storeRoute.concepts.filter(id=>arlington.concepts[id]?.point&&(arlington.concepts[id].view||'local')==='local'),routeRoadIds=storeRoute.concepts.filter(id=>arlington.concepts[id]?.type==='road');
+assert.deepEqual(new Set(routeModel.anchors.map(a=>a.id)),new Set(routePointIds),'route map omitted a referenced anchor');assert.ok(routeRoadIds.every(id=>routeModel.roads.some(r=>r.id===id&&r.state==='active')),'route map omitted a referenced road');
+
+// Unauthored custom-course callouts use the same deterministic, measurement-free fallback.
+const customCluster=Core.clone(generated),customAnchorIds=Object.keys(customCluster.concepts).filter(id=>customCluster.concepts[id].point);
+customAnchorIds.forEach((id,i)=>{customCluster.concepts[id].point=[330+(i%2)*7,230+Math.floor(i/2)*7];delete customCluster.concepts[id].labelOffset;delete customCluster.concepts[id].labelAlign;});
+const customModelA=Core.buildMapModel(customCluster,{mode:'lesson',view:'local',concepts:['road-1',...customAnchorIds],highlight:'road-1',learnedIds:['road-1'],labels:true}),customModelB=Core.buildMapModel(customCluster,{mode:'lesson',view:'local',concepts:['road-1',...customAnchorIds],highlight:'road-1',learnedIds:['road-1'],labels:true});
+assertBoxesDoNotOverlap(customModelA.anchors,'custom fallback callouts');assert.deepEqual(customModelA,customModelB,'fallback callout layout must be deterministic');
+assert.equal(customModelA.backgrounds.length,0,'custom course fabricated decorative water');assert.equal(Object.hasOwn(generated.map,'backgroundPaths'),false,'generator should not fabricate background geography');
+
+// Optional decorative geography is bounded inert manifest data.
+const withBackground=Core.clone(generated);withBackground.map.backgroundPaths=[{view:'local',kind:'water',opacity:.4,d:'M10 10 L20 20Z'}];assert.equal(Core.validateCourse(withBackground).ok,true);
+for(const badPath of [{view:'local',kind:'water',opacity:2,d:'M0 0Z'},{view:'local',kind:'script',d:'M0 0Z'},{view:'elsewhere',kind:'terrain',d:'M0 0Z'},{view:'local',kind:'water',d:''}]){const bad=Core.clone(generated);bad.map.backgroundPaths=[badPath];assert.equal(Core.validateCourse(bad).ok,false,`unsafe background path validated: ${JSON.stringify(badPath)}`);}
+const badOffset=Core.clone(generated);badOffset.concepts['anchor-1'].labelOffset=['far',10];assert.equal(Core.validateCourse(badOffset).ok,false);const badAlign=Core.clone(generated);badAlign.concepts['anchor-1'].labelAlign='diagonal';assert.equal(Core.validateCourse(badAlign).ok,false);
+
+// Optional geospatial schema accepts only bounded road lines and valid anchor coordinates.
+assert.equal(Core.validateGeometry({type:'LineString',coordinates:[[-71.2,42.4],[-71.1,42.41]]}),true);
+assert.equal(Core.validateGeometry({type:'MultiLineString',coordinates:[[[-71.2,42.4],[-71.1,42.41]],[[-71.1,42.41],[-71.09,42.42]]]}),true);
+assert.equal(Core.validateGeometry([[-71.2,42.4],[-71.1,42.41]]),true,'coordinate-array shorthand should validate');
+for(const geometry of [{type:'Polygon',coordinates:[]},{type:'LineString',coordinates:[[-71.2,42.4]]},{type:'LineString',coordinates:[[-181,42.4],[-71.1,42.41]]},{type:'MultiLineString',coordinates:[]}])assert.equal(Core.validateGeometry(geometry),false,`invalid geometry validated: ${JSON.stringify(geometry)}`);
+const tooLarge={type:'LineString',coordinates:Array.from({length:Core.MAX_GEOMETRY_COORDINATES+1},(_,i)=>[-71+i/1e7,42.4])};assert.equal(Core.validateGeometry(tooLarge),false,'oversized geometry validated');
+const badGeo=Core.clone(generated);badGeo.concepts['road-1'].geometry={type:'Polygon',coordinates:[]};assert.equal(Core.validateCourse(badGeo).ok,false);
+const badLocation=Core.clone(generated);badLocation.concepts['anchor-1'].location={lat:91,lon:0};assert.equal(Core.validateCourse(badLocation).ok,false);
+
+// Arlington uses committed OSM-derived data; lesson and Explore selection stay question-scoped.
+for(const id of ['mass','broadway','pleasant','mystic','summer','park','lake','r2','r16'])assert.equal(Core.validateGeometry(arlington.concepts[id].geometry),true,`missing Arlington road geometry: ${id}`);
+for(const id of ['center','heights','wholeFoods','stopShop','traderJoes','alewife'])assert.ok(arlington.concepts[id].location,`missing Arlington anchor location: ${id}`);
+assert.equal(arlington.map.tileProvider,'osm-standard');assert.equal(arlington.map.featureProvenance.license,'ODbL 1.0');assert.equal(arlingtonGeodata.provenance.source,'OpenStreetMap contributors');assert.ok(arlingtonGeodata.osmWayIds.mass.length>0);
+const geoLesson=Core.planMap(arlington,{mode:'lesson',view:'local',concepts:['mass','wholeFoods'],highlight:'mass',learnedIds:['mass','broadway','spy']});
+assert.equal(geoLesson.renderer,'leaflet');assert.equal(geoLesson.features.find(f=>f.id==='mass').state,'active');assert.equal(geoLesson.features.find(f=>f.id==='broadway').state,'context');assert.ok(geoLesson.features.some(f=>f.id==='wholeFoods'&&f.location));assert.ok(!geoLesson.features.some(f=>f.id==='spy'),'unrelated learned anchor leaked onto lesson map');
+assert.ok(geoLesson.bounds.east-geoLesson.bounds.west<.01,'anchor-focused lesson did not zoom to the question area');
+const geoRoute=Core.planMap(arlington,{mode:'lesson',view:'local',concepts:storeRoute.concepts,highlight:storeRoute.map,learnedIds:['mass']});for(const id of routePointIds)assert.ok(geoRoute.features.some(f=>f.id===id&&f.location),`route geodata omitted ${id}`);
+for(const q of Core.allQuestions(arlington).filter(question=>question.type==='chain')){const view=q.map&&arlington.concepts[q.map]?.view==='regional'?'regional':'local',plan=Core.planMap(arlington,{mode:'lesson',view,concepts:q.concepts,highlight:q.map,learnedIds:Object.keys(arlington.concepts)});for(const id of q.concepts){const concept=arlington.concepts[id];if(concept?.geometry||concept?.location)assert.ok(plan.features.some(feature=>feature.id===id),`route feature selection omitted ${id}: ${q.prompt}`);}}
+const geoExplore=Core.selectGeoFeatures(arlington,{mode:'explore',view:'local',learnedIds:['mass','center','wholeFoods']});assert.deepEqual(new Set(geoExplore.map(f=>f.id)),new Set(['mass','center','wholeFoods']));
+const customPlan=Core.planMap(generated,{mode:'lesson',view:'local',concepts:['road-1','anchor-1'],highlight:'road-1',learnedIds:['road-1']});assert.equal(customPlan.renderer,'svg','manual custom draft fabricated geospatial features');
+assert.equal(Core.TILE_PROVIDER.url,'https://tile.openstreetmap.org/{z}/{x}/{y}.png');assert.equal(Core.TILE_PROVIDER.options.attribution,'© OpenStreetMap contributors');assert.match(Core.TILE_PROVIDER.options.attributionUrl,/^https:\/\/www\.openstreetmap\.org\/copyright$/);assert.equal(Core.validTileProvider(Core.TILE_PROVIDER),true);assert.equal(Core.validTileProvider({...Core.TILE_PROVIDER,url:'http://tiles.example/{z}/{x}/{y}.png'}),false);assert.equal(Core.validTileProvider({...Core.TILE_PROVIDER,options:{...Core.TILE_PROVIDER.options,attribution:'<script>'}}),false);
+const indexSource=fs.readFileSync('index.html','utf8');assert.match(indexSource,/vendor\/leaflet\/leaflet\.js/);assert.match(indexSource,/courses\/arlington-geodata\.js/);assert.doesNotMatch(indexSource,/unpkg|cdn\.jsdelivr|cdnjs/,'runtime CDN dependency remains');assert.doesNotMatch(indexSource,/referrer-policy|name=["']referrer/i,'restrictive Referrer-Policy added');
+assert.ok(fs.statSync('vendor/leaflet/leaflet.js').size>100000&&fs.statSync('vendor/leaflet/leaflet.css').size>10000,'Leaflet was not vendored locally');assert.match(appSource,/L\.tileLayer/);assert.match(appSource,/tileerror/);assert.match(appSource,/activeCount<=3/,'dense active feature sets should not receive overlapping permanent tooltips');assert.doesNotMatch(appSource,/prefetch|Cache-Control|Pragma/,'map renderer enables prohibited tile behavior');
 
 // Preserve Arlington geography/content regressions from b2b1d9b.
 const concepts=arlington.concepts,lessons=Core.flatLessons(arlington),allQuestions=Core.allQuestions(arlington);

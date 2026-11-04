@@ -1,13 +1,14 @@
 (function(root, factory){
-  const course=factory();
+  const geodata=typeof module==='object'&&module.exports?require('./arlington-geodata.js'):root.RoadwiseArlingtonGeodata;
+  const course=factory(geodata);
   if(typeof module==='object'&&module.exports) module.exports=course;
   root.RoadwiseCourses=root.RoadwiseCourses||{};
   root.RoadwiseCourses[course.id]=course;
-})(typeof globalThis!=='undefined'?globalThis:this,function(){
+})(typeof globalThis!=='undefined'?globalThis:this,function(geodata){
 'use strict';
 const concepts = {
   mass:{name:'Mass Ave',type:'road',icon:'↔',description:'The east–west spine: west to Arlington Heights and Lexington; east to East Arlington and Cambridge.',view:'local',d:'M55 275 C150 260 235 242 321 231 C420 240 525 249 675 260',label:[470,270]},
-  center:{name:'Arlington Center',type:'landmark',icon:'◎',description:'The central decision point on Mass Ave.',view:'local',point:[321,231]},
+  center:{name:'Arlington Center',type:'landmark',icon:'◎',description:'The central decision point on Mass Ave.',view:'local',point:[321,231],labelOffset:[22,-38],labelAlign:'left'},
   broadway:{name:'Broadway',type:'road',icon:'→',description:'Branches east from Arlington Center and runs east–west north of Mass Ave toward Somerville.',view:'local',d:'M321 231 C370 214 430 205 500 204 S625 209 700 214',label:[520,190]},
   pleasant:{name:'Pleasant St / Route 60',type:'road',icon:'↓',description:'Runs south from Mass Ave toward Route 2, the Belmont line, and Belmont Center.',view:'local',d:'M321 231 C340 274 353 319 346 365 S315 427 286 477',label:[283,344]},
   mystic:{name:'Mystic Street',type:'road',icon:'↑',description:'Runs north from Mass Ave toward the Mystic Lakes and Winchester line.',view:'local',d:'M321 231 C306 188 315 147 352 112 S430 68 504 48',label:[326,132]},
@@ -15,9 +16,9 @@ const concepts = {
   summer:{name:'Summer Street',type:'road',icon:'↖',description:'Runs west/northwest from the Mystic/Mill and Arlington High area past Ed Burns Arena toward the Reservoir and Lexington line.',view:'local',d:'M346 181 C307 170 269 154 225 146 S133 126 48 104',label:[157,130]},
   park:{name:'Park Avenue',type:'road',icon:'↘',description:'Links Arlington Heights south to Route 2 and its Alewife-side gateway.',view:'local',d:'M184 252 C211 287 229 326 239 372 S247 432 262 477',label:[194,348]},
   lake:{name:'Lake Street',type:'road',icon:'↘',description:'Links East Arlington south to Route 2, Alewife, and Cambridge.',view:'local',d:'M565 253 C554 300 535 337 510 359 S478 420 482 477',label:[535,325]},
-  heights:{name:'Arlington Heights',type:'landmark',icon:'◉',description:'The western Arlington hub on Mass Ave.',view:'local',point:[184,252]},
-  east:{name:'East Arlington',type:'landmark',icon:'◉',description:'The eastern neighborhood along Mass Ave, south of Broadway.',view:'local',point:[610,255]},
-  spy:{name:'Spy Pond',type:'landmark',icon:'◒',description:'A strong visual anchor south of Mass Ave.',view:'local',point:[410,315]},
+  heights:{name:'Arlington Heights',type:'landmark',icon:'◉',description:'The western Arlington hub on Mass Ave.',view:'local',point:[184,252],labelOffset:[-18,-43],labelAlign:'right'},
+  east:{name:'East Arlington',type:'landmark',icon:'◉',description:'The eastern neighborhood along Mass Ave, south of Broadway.',view:'local',point:[610,255],labelOffset:[16,34],labelAlign:'left'},
+  spy:{name:'Spy Pond',type:'landmark',icon:'◒',description:'A strong visual anchor south of Mass Ave.',view:'local',point:[410,315],labelOffset:[16,35],labelAlign:'left'},
   mysticLakes:{name:'Mystic Lakes / Winchester direction',type:'gateway',icon:'▲',description:'The northern anchor reached by following Mystic Street toward the Winchester line.',view:'local',point:[504,48]},
   belmont:{name:'Belmont Center',type:'gateway',icon:'▼',description:'Route 60 continues south from Pleasant Street through the Belmont line to Belmont Center.',view:'local',point:[286,477]},
   highArena:{name:'Arlington High / Ed Burns Arena',type:'landmark',icon:'◆',description:'The eastern Summer Street corridor begins near Arlington High and passes Ed Burns Arena.',view:'local',point:[292,158]},
@@ -25,9 +26,9 @@ const concepts = {
   somerville:{name:'Somerville / Teele direction',type:'gateway',icon:'→',description:'Broadway carries the eastbound mental model toward Somerville and the Teele/Ball Square side.',view:'local',point:[700,214]},
   cambridge:{name:'Cambridge direction',type:'gateway',icon:'↘',description:'Mass Ave east and the Lake Street/Alewife gateway both orient toward Cambridge.',view:'local',point:[706,276]},
   lexingtonLocal:{name:'Lexington direction',type:'gateway',icon:'←',description:'Mass Ave west and the Summer Street corridor both reach the Lexington side.',view:'local',point:[55,275]},
-  wholeFoods:{name:'Whole Foods Market',type:'landmark',icon:'🛒',description:'A current store landmark at 808 Mass Ave near Bartlett Avenue and Arlington Center.',view:'local',point:[342,233]},
-  stopShop:{name:'Stop & Shop',type:'landmark',icon:'🛒',description:'A current store landmark at 905 Mass Ave, west of Whole Foods.',view:'local',point:[270,242]},
-  traderJoes:{name:'Trader Joe’s',type:'landmark',icon:'🛒',description:'A current store landmark at 1427 Mass Ave in the Arlington Heights area.',view:'local',point:[132,263]},
+  wholeFoods:{name:'Whole Foods Market',type:'landmark',icon:'🛒',description:'A current store landmark at 808 Mass Ave near Bartlett Avenue and Arlington Center.',view:'local',point:[342,233],labelOffset:[18,42],labelAlign:'left'},
+  stopShop:{name:'Stop & Shop',type:'landmark',icon:'🛒',description:'A current store landmark at 905 Mass Ave, west of Whole Foods.',view:'local',point:[270,242],labelOffset:[-18,38],labelAlign:'right'},
+  traderJoes:{name:'Trader Joe’s',type:'landmark',icon:'🛒',description:'A current store landmark at 1427 Mass Ave in the Arlington Heights area.',view:'local',point:[132,263],labelOffset:[16,42],labelAlign:'left'},
   crossTown:{name:'Cross-town connector choices',type:'connection',icon:'⇄',description:'Summer runs west/northwest; Park and Lake run south to Route 2 gateways.'},
   r2:{name:'Route 2',type:'road',icon:'═',description:'The southern highway: east toward Alewife/Cambridge; west toward Lexington and Route 128.',view:'local',d:'M42 383 C165 378 263 373 350 364 S542 350 730 339',label:[390,389]},
   alewife:{name:'Alewife',type:'landmark',icon:'🚇',description:'Transit hub and regional gateway southeast of Arlington.',view:'local',point:[430,354]},
@@ -47,6 +48,9 @@ const concepts = {
   logan:{name:'Logan Airport',type:'destination',icon:'✈',description:'East Boston destination whose tunnel and airport approaches require live navigation.',view:'regional',point:[700,370]},
   loganRoute:{name:'Logan gateway decision',type:'connection',icon:'→',description:'Think west-to-east through a Boston gateway; tunnels, ramps, traffic, and terminal roads need GPS.'}
 };
+
+for(const [id,geometry] of Object.entries(geodata?.roads||{}))if(concepts[id])concepts[id].geometry=geometry;
+for(const [id,location] of Object.entries(geodata?.anchors||{}))if(concepts[id])concepts[id].location=location;
 
 const regionalRoads = {
   mass:{name:'Mass Ave',d:'M88 212 C190 218 275 235 347 254 S468 275 545 280',label:[275,230]},
@@ -206,7 +210,7 @@ return {
   pathTitle:'Arlington outward',
   heroTitle:'Build your mental map.',
   concepts,
-  map:{viewBox:[0,0,760,500],regionalRoads,landmarks},
+  map:{viewBox:[0,30,760,450],regionalRoads,landmarks,tileProvider:'osm-standard',featureProvenance:{text:'Road and anchor features derived from OpenStreetMap contributors; static extraction, no runtime Overpass queries.',license:'ODbL 1.0',url:'https://www.openstreetmap.org/copyright',retrieved:'2026-11-04'},backgroundPaths:[{view:'local',kind:'water',opacity:.58,d:'M368 318 C382 298 414 292 440 303 C455 310 456 329 439 338 C414 351 382 345 370 332Z'}]},
   units,
   generator:{kind:'seed',version:1,generatedAt:null,reviewed:true,source:'Hand-authored Arlington seed preserved from b2b1d9b'}
 };
